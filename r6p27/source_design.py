@@ -166,6 +166,38 @@ def make_crosswalk(cad_root:Path,site:Path)->dict:
         "minimum_NBC105_2025_gross_pct":1.0,
         "code_comparison":"BELOW_1_PERCENT_MINIMUM__DESIGN_REVISION_REQUIRED"}
     ]
+    beam_slab=[
+        {"item":"Plinth beam · typical source schedule","source_section":"230 × 300 mm",
+         "source_original_detail":"3Ø12 continuous at top and bottom",
+         "nominal_bar_count":3,"bar_diameter_mm":12,"source_detail_status":"DRAWING_DETAIL_NOT_MEMBER_CAPACITY_VERIFIED"},
+        {"item":"GF main beam · example support top","source_section":"230 × 405 mm typical drawing, 300 × 400 mm B46 in SAR",
+         "source_original_detail":"3Ø16 through + 2Ø16 extra at support",
+         "nominal_bar_count":5,"bar_diameter_mm":16,"source_detail_status":"EXAMPLE_DRAWING_SPAN_NOT_MATCHED_TO_SAR_B46"},
+        {"item":"GF main beam · example midspan bottom","source_section":"230 × 405 mm typical drawing",
+         "source_original_detail":"2Ø16 through + 1Ø12 through (different diameters)",
+         "bar_groups":[{"count":2,"diameter_mm":16},{"count":1,"diameter_mm":12}],
+         "source_detail_status":"EXAMPLE_SUPPORT_TO_MIDSPAN_MAPPING_UNVERIFIED"},
+        {"item":"FF main beam · example support top","source_section":"230 × 405 mm typical drawing",
+         "source_original_detail":"3Ø12 through + 2Ø12 extra at support",
+         "nominal_bar_count":5,"bar_diameter_mm":12,"source_detail_status":"ORIGINAL_DRAWING_DETAIL_MEMBER_CAPACITY_UNVERIFIED"},
+        {"item":"FF main beam · example midspan bottom","source_section":"230 × 405 mm typical drawing",
+         "source_original_detail":"3Ø12 through",
+         "nominal_bar_count":3,"bar_diameter_mm":12,"source_detail_status":"ORIGINAL_DRAWING_DETAIL_MEMBER_CAPACITY_UNVERIFIED"},
+        {"item":"Slab top and bottom · both directions","source_section":"Source slab layout, void/staircase exclusions",
+         "source_original_detail":"Ø8 @ 150 mm centres per metre and direction",
+         "bar_groups":[{"count":1000/150,"diameter_mm":8}],
+         "source_detail_status":"REBAR_AREA_SCREEN_ONLY__SPANS_SUPPORTS_AND_CAPACITY_UNVERIFIED"}
+    ]
+    for row in beam_slab:
+        groups=row.get("bar_groups",[{"count":row.get("nominal_bar_count",0),
+                                     "diameter_mm":row.get("bar_diameter_mm",0)}])
+        row["nominal_rebar_area_mm2"]=round(
+            sum(n["count"]*math.pi*n["diameter_mm"]**2/4 for n in groups),3)
+        row.pop("bar_groups",None)
+        # The slab figure is mm² per 1 metre per direction. Beam figures are
+        # section mm² for that specified example support/midspan only.
+        row["area_unit"]="mm2/m per direction and layer" if row["item"].startswith("Slab") else "mm2 at illustrated section"
+        row["construction_issue_approved"]=False
     return {
       "schema":SCHEMA,"project_id":"PRJ-000007",
       "source_original_DXF_sha":CAD_SHA,
@@ -179,6 +211,7 @@ def make_crosswalk(cad_root:Path,site:Path)->dict:
                                           else "12Ø @ 150 top and bottom both ways"}
                           for k,v in SCHEDULE.items()},
       "footings":feet,"column_schedule":column_table,
+      "source_beam_slab_reinforcement_arithmetic":beam_slab,
       "source_footing_count":21,"source_Gf_column_count":23,
       "source_footing_concrete_thickness_m":SOURCE_FOOTING_THICKNESS_M,
       "owner_approved_concrete_unitweight_kN_m3":CONCRETE_UNIT_KN_M3,
@@ -236,6 +269,13 @@ def html(d:dict)->str:
                     f"<td>{escape(c['revised_report_GF_bars'])}</td><td>{fmt(c['reported_schedule_Ast_mm2'],1)}</td>"
                     f"<td>{fmt(c['reported_schedule_pct'],3)}%</td>"
                     f"<td>{'BELOW 1% CODE MINIMUM' if issue else 'At or above 1% MINIMUM ONLY'}</td></tr>")
+    super_rows=[]
+    for item in d["source_beam_slab_reinforcement_arithmetic"]:
+        super_rows.append("<tr><th>"+escape(item["item"])+"</th><td>"+
+            escape(item["source_section"])+"</td><td>"+
+            escape(item["source_original_detail"])+"</td><td>"+
+            fmt(item["nominal_rebar_area_mm2"],2)+" "+escape(item["area_unit"])+
+            "</td><td>Existing drawing detail · design check required</td></tr>")
     actions=[]
     for item in d["required_engineer_decisions"]:
         actions.append(f"<tr><td>{item['id']}</td><td>{escape(item['finding'])}</td>"
@@ -269,7 +309,7 @@ def html(d:dict)->str:
     <div class='numbers'><div><span>Original footing outlines</span><b>21</b></div>
     <div><span>Column axes mapped</span><b>23/23</b></div><div><span>Scheduled 500mm footing concrete</span><b>{fmt(qty['source_scheduled_concrete_m3'],3)} m³</b></div>
     <div><span>Original DXF drawn footprint volume</span><b>{fmt(qty['original_dxf_drawn_concrete_m3'],3)} m³</b></div></div>
-    <nav class='toc'><a href='#footings'>Footing takeoff</a><a href='#members'>Column steel/code</a><a href='#loads'>21 footing loads</a>
+    <nav class='toc'><a href='#footings'>Footing takeoff</a><a href='#members'>Column steel/code</a><a href='#superstructure'>Beam and slab steel</a><a href='#loads'>21 footing loads</a>
     <a href='#decisions'>Construction decision register</a><a href='#references'>Original sources</a></nav>
     <div class='bad'><b>DO NOT CAST FROM THIS RESEARCH REPORT.</b> The original structural report itself marks footing F3 <b>NOT SAFE IN ONE WAY SHEAR</b>. C4's report reinforcement is below the NBC105:2025 1% minimum, and the current model omits walls, complete slabs and code seismic actions. A licensed engineer must resolve and issue revised signed construction drawings.</div>
     <section id='footings'><p class='eyebrow'>01 · DRAWING SHEET STR-01</p><h2>Footings — original schedule and concrete calculation</h2>
@@ -283,16 +323,23 @@ def html(d:dict)->str:
       <p class='bad'>C4 in the <b>revised SAR</b> says 8Ø12 for a Ø350mm column, giving 904.8mm² steel / 96,211mm² gross section = <b>0.9404%</b>; NBC105:2025 Annex A cl.4.2.2(b) requires at least <b>1%</b>. This is a reported-section minimum-area failure; cross-check the actual issued drawing cage because the drawing text extraction itself has multiple story/bar notations. Steel-area compliance alone does not prove axial/biaxial or seismic detailing adequacy.</p>
       <p>Other reported C1, C2 and C3 minimum-percent screens are above 1%; that only clears this single <em>minimum longitudinal ratio</em> condition, not structural member or joint design. The original SAR also shows a 300×400mm B46 beam while the general drawing's main beam family is around 230×405mm: reconcile member-by-member, not by replacing all beams with a single section.</p>
     </section>
-    <section id='loads'><p class='eyebrow'>03 · 21 ORIGINAL DXF SUPPORT OUTLINES × 4 CASES GENERATED IN R6.26</p><h2>Footing-to-column crosswalk and trial vertical actions</h2>
+    <section id='superstructure'><p class='eyebrow'>03 · ACTUAL JULY 2026 BEAM / SLAB DETAILS · REBAR AREA CALCULATED</p>
+      <h2>Beams and slabs — source reinforcement schedules, with calculated steel areas</h2>
+      <p>The July 2026 structural sheets give distinct plinth, ground and upper-floor details. These are <b>quantities extracted from original drawing examples</b> rather than our recommended bar arrangements: actual span, support and required seismic design actions are not established.</p>
+      <div class='scroll'><table><thead><tr><th>Source example</th><th>Section</th><th>Original steel notation</th><th>Calculated nominal steel area</th><th>Acceptance</th></tr></thead>
+      <tbody>{''.join(super_rows)}</tbody></table></div>
+      <p class='note'>Example bar area = sum(nπd²/4). For slab Ø8 @150mm the figure is area per one-metre strip per direction per layer; it is <b>not</b> a final total steel takeoff. Source GF main beam 230×405mm contrasts with revised SAR B46 300×400mm. Member-wise design, minimum bars, shear/torsion, plastic hinge confinement, lap/anchorage and actual slab support remain to be checked by an engineer against the governing source revision.</p>
+    </section>
+    <section id='loads'><p class='eyebrow'>04 · 21 ORIGINAL DXF SUPPORT OUTLINES × 4 CASES GENERATED IN R6.26</p><h2>Footing-to-column crosswalk and trial vertical actions</h2>
     <p>Unlike the previous report, this crosswalk assigns <b>each of the 23 original GF columns to exactly one of the 21 native footing outlines</b>, including two pairs sharing CF1. DL and LL base reactions come from the signed independent OpenSees computation. The last pressure column adds 500mm footing weight at your approved 20 kN/m³ and divides by actual drawn area. <strong>It is an incomplete load diagnostic, not a bearing-capacity or construction verdict</strong>: masonry/walls, full live-load zoning, uplift, moments/eccentricity, geotechnical corrections and seismic/wind combinations are not included.</p>
     <div class='scroll'><table><thead><tr><th>Source grid</th><th>Footing</th><th>DXF L×B m</th><th>Concrete m³</th><th>Trial DL kN</th><th>Trial LL kN</th><th>Trial q kPa</th><th>Geo table kPa</th><th>Source dimension</th></tr></thead><tbody>{''.join(detail)}</tbody></table></div>
     <p class='note'>* For square isolated footings, geotechnical values at founding depth 1.5m and 25mm settlement are size-linear interpolations between the source geotechnical tables (1.5m=166, 2.0m=177, 2.25m=184, 2.5m=190 kPa). The user-approved 160 kPa model scenario is not a universal allowable; the geotechnical report does not directly give the required 4.0×1.5m CF1 rectangular/multi-column bearing and eccentricity capacity. The test values may be low because the model omits important load sources.</p>
     </section>
-    <section id='decisions'><p class='eyebrow'>04 · DESIGN REVIEW ACTIONS IN EXECUTION ORDER</p><h2>What must change before issuing construction drawings</h2>
+    <section id='decisions'><p class='eyebrow'>05 · DESIGN REVIEW ACTIONS IN EXECUTION ORDER</p><h2>What must change before issuing construction drawings</h2>
       <div class='scroll'><table><thead><tr><th>Ref</th><th>Actual finding</th><th>Required design output</th></tr></thead><tbody>{''.join(actions)}</tbody></table></div>
       <p>This is the shortest responsible path toward a construction issue: resolve the original contradictory geometry/use, re-create actual wall/slab/beam/column and footing load paths, solve NBC105:2025 governing actions, redesign failing members/foundations, and issue signed, dimensioned construction drawings and bar bending schedules after independent review.</p>
     </section>
-    <section id='references'><p class='eyebrow'>05 · EVIDENCE</p><h2>Original sources and machine-readable calculation</h2>
+    <section id='references'><p class='eyebrow'>06 · EVIDENCE</p><h2>Original sources and machine-readable calculation</h2>
     <div class='source-list'><a href='{SOURCE_DRAWING}'>July 2026 Structural Drawings</a><a href='{SOURCE_SAR}'>Revised Structural Report</a><a href='{SOURCE_GEO}'>Geotechnical Report</a>
     <a href='{CODE_NBC}'>Official NBC105:2025</a><a href='reports/r6p27/source-design-crosswalk.json'>Full 21-footing JSON calculations</a>
     <a href='reports/r6p27/source-design-sha256.json'>Artifact SHA256 receipt</a></div>
