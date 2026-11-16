@@ -1,0 +1,143 @@
+{
+  "schema": "jp.structural.project_intake.v1",
+  "description": "Reusable blank project packet; values null until verified, not Narayani data",
+  "project_id": null,
+  "project_name": null,
+  "location": {
+    "municipality": null,
+    "ward": null,
+    "district": null,
+    "country": "Nepal"
+  },
+  "review": {
+    "status": "INTAKE",
+    "engineering_approval": false,
+    "construction_release": false,
+    "approved_by": null,
+    "review_date": null
+  },
+  "source_register": {
+    "google_drive_folder_uri": null,
+    "architectural": {
+      "uri": null,
+      "revision": null,
+      "sha256": null
+    },
+    "structural": {
+      "uri": null,
+      "revision": null,
+      "sha256": null
+    },
+    "geotechnical": {
+      "uri": null,
+      "revision": null,
+      "sha256": null
+    },
+    "prior_analysis": {
+      "uri": null,
+      "revision": null,
+      "sha256": null
+    },
+    "cad_repository": "FabinGurung/jp-drawing-coordination",
+    "cad_commit_sha": null,
+    "project_drawing_path": null
+  },
+  "basis": {
+    "design_code_edition": {
+      "value": null,
+      "source_kind": "UNRESOLVED",
+      "source_uri": null,
+      "code_clause": null
+    },
+    "concrete_grade": {
+      "value": null,
+      "unit": null,
+      "source_kind": "UNRESOLVED",
+      "source_uri": null
+    },
+    "concrete_unit_weight": {
+      "value": null,
+      "unit": "kN/m3",
+      "source_kind": "UNRESOLVED",
+      "source_uri": null,
+      "approval": null
+    },
+    "reinforcement": {
+      "value": null,
+      "source_kind": "UNRESOLVED"
+    },
+    "soil_bearing": {
+      "value": null,
+      "unit": "kPa",
+      "source_kind": "UNRESOLVED",
+      "source_uri": null,
+      "conditions": null
+    },
+    "seismic_site_class": {
+      "value": null,
+      "source_kind": "UNRESOLVED",
+      "code_clause": null,
+      "source_uri": null
+    }
+  },
+  "geometry": {
+    "coordinate_datum": null,
+    "coordinate_units": "m",
+    "levels": [],
+    "grids": [],
+    "column_members": [],
+    "beam_members": [],
+    "shells": [],
+    "openings": [],
+    "walls": [],
+    "stairs": [],
+    "footings": [],
+    "supports": [],
+    "source_conflicts": []
+  },
+  "actions": {
+    "gravity": [],
+    "occupancy": [],
+    "seismic": [],
+    "wind": [],
+    "other": [],
+    "combinations": []
+  },
+  "analysis": {
+    "source_accepted": false,
+    "solver": "OpenSeesPy",
+    "cases": [],
+    "load_path_verified": false,
+    "mesh_refinement_verified": false,
+    "six_axis_equilibrium_verified": false
+  },
+  "design_checks": {
+    "columns": [],
+    "beams": [],
+    "slabs": [],
+    "stairs": [],
+    "foundations": [],
+    "joint_ductility": [],
+    "open_adverse_findings": []
+  },
+  "qa": {
+    "source_sha256": null,
+    "model_sha256": null,
+    "results_sha256": null,
+    "report_sha256": null,
+    "actions_run_url": null,
+    "engineer_review_status": "HOLD"
+  },
+  "public_artifacts": {
+    "project_page": null,
+    "report_page": null,
+    "manifest": null,
+    "source_safe_only": true
+  },
+  "field_legend": {
+    "SOURCE_VERIFIED": "exact drawing, report or measured evidence",
+    "USER_APPROVED_ASSUMPTION": "provisional with user approval/date",
+    "CODE_DERIVED_ASSUMPTION": "applicable code/clauses and calculations",
+    "UNRESOLVED": "missing/conflicted; never substitute zero"
+  }
+}
