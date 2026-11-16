@@ -75,7 +75,7 @@ def make_crosswalk(cad_root:Path,site:Path)->dict:
             "sls_trial_dl_reactions_kN":0.,"sls_trial_ll_reactions_kN":0.}
     for f in graph["footings"]:
         name=f["family"]
-        refs=[part.strip() for part in f["source_columns"].split(",") if part.strip()]
+        refs=([part.strip() for part in f["source_columns"].split(",") if part.strip()] if isinstance(f["source_columns"],str) else list(f["source_columns"]))
         require(refs and all(r in sources for r in refs),
                 "original DXF footing does not reference actual source column "+f["id"])
         assigned.extend(refs)
