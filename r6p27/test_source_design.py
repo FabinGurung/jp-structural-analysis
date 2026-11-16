@@ -50,7 +50,7 @@ def test_publish_data_and_html_are_source_derived_and_hash_locked(inputs):
     page=(site/"r6p27-construction-review.html")
     text=page.read_text()
     for term in ("36.915","36.330","0.940","G1","NOT SAFE IN ONE WAY SHEAR",
-                 'id="loads"','id="members"',"R6.26 OpenSees"):
+                 "id='loads'","id='members'","R6.26 OpenSees"):
         assert term in text,term
     data=json.loads((site/"reports/r6p27/source-design-crosswalk.json").read_text())
     assert len(data["footings"])==21 and data["source_Gf_column_count"]==23
