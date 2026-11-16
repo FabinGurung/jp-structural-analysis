@@ -839,6 +839,17 @@ jobs:
           PYTHONPATH=r6p23-main python -m r6p26.publish --cad-root r6p25-cad-source --site-dir site
           PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p26.publish import verify; print("R6P26_SOURCE_AND_FE_RESULTS_VERIFIED", verify(Path("site"))["result_sha256"])'
           node --check site/r6p26-report.js
+      - name: Apply six-section Studio / Projects / Developers / Research portal without deleting legacy sources
+        run: |
+          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_portal.py
+          PYTHONPATH=r6p23-main python r6p23-main/portal/build.py --site-dir site
+          PYTHONPATH=r6p23-main python r6p23-main/portal/build.py --site-dir site --verify-only
+          node --check site/site-system.js
+          test -f site/legacy-home.html
+          test -f site/legacy-more.html
+          test -f site/r6p26-report.html
+          test -f site/report.html
+          test -f site/projects/index.html
       - name: Write deployment metadata
         run: |
           python - <<'PY'
@@ -868,6 +879,48 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5.0.1
+      - name: Verify live six-section portal navigation, source receipts and historical safety
+        run: |
+          python - <<'PY'
+          import json,os,time,urllib.request,hashlib
+          owner,repo=os.environ["GITHUB_REPOSITORY"].split("/")
+          base="https://"+owner.lower()+".github.io/"+repo+"/"
+          routes=("index.html","studio.html","projects.html","developers.html","research.html","more.html")
+          def fetch(path,attempt):
+              req=urllib.request.Request(base+path+"?portal_v1="+str(attempt),
+                headers={"Cache-Control":"no-cache","User-Agent":"JP-Portal-v1-Live-Source-Readback"})
+              return urllib.request.urlopen(req,timeout=25).read()
+          for attempt in range(18):
+              try:
+                  receipt=json.loads(fetch("portal-manifest.json",attempt))
+                  assert receipt["schema"]=="jp.structural.portal.six_section.v1"
+                  assert receipt["version"]=="1.0.0"
+                  assert receipt["active_real_projects"]==["PRJ-000007"]
+                  assert receipt["real_building_engineering_approval"] is False
+                  assert receipt["historical_F3_one_way_shear_safe"] is False
+                  assert receipt["frozen_engine_software_sha"]=="1d6394d1d871b070d17f056b6eec4c74efdfb3af"
+                  assert len(receipt["navigation"])==6
+                  for path in routes:
+                      raw=fetch(path,attempt)
+                      assert hashlib.sha256(raw).hexdigest()==receipt["files_sha256"][path],path
+                      h=raw.decode("utf-8")
+                      assert 'class="top-toc"' in h and 'class="left-toc"' in h
+                      assert 'class="right-pane"' in h and 'class="page-adjacent"' in h
+                      assert all('href="'+route+'"' in h for route in routes)
+                  standard=fetch("standards/studio-standard-v1.md",attempt).decode("utf8")
+                  assert all("V"+str(i) in standard for i in range(1,8))
+                  assert "Do not copy Narayani" in standard
+                  assert "NOT SAFE IN ONE WAY SHEAR" in fetch("research.html",attempt).decode()
+                  assert "Narayani" in fetch("projects.html",attempt).decode()
+                  for legacy in ("legacy-home.html","legacy-more.html","r6p26-report.html","r6p25.html","r6p23.html","report.html"):
+                      assert len(fetch(legacy,attempt))>100
+                  print("JP_PORTAL_SIX_SECTION_LIVE_SITE_AND_IMMUTABLE_SOURCE_PASS")
+                  break
+              except Exception as err:
+                  if attempt==17:raise
+                  print("Waiting for portal CDN revision",attempt+1,str(err)[:220])
+                  time.sleep(10)
+          PY
       - name: Verify live R6.26 independent calculation report and no false project acceptance
         run: |
           python - <<'PY'
