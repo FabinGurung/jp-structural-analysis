@@ -850,6 +850,15 @@ jobs:
           test -f site/r6p26-report.html
           test -f site/report.html
           test -f site/projects/index.html
+      - name: Compute R6.27 original DXF footage, code minimum column steel ratio and footing-to-reaction crosswalk
+        env:
+          R6P25_CAD_ROOT: r6p25-cad-source
+          R6P27_SITE: site
+        run: |
+          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/r6p27/test_source_design.py
+          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import publish; print("R6P27_REAL_SOURCE_CROSSWALK",publish(Path("r6p25-cad-source"),Path("site"))["source_original_DXF_sha"])'
+          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import verify; print("R6P27_ACTUAL_DRAWING_AND_ACTION_RECONCILIATION_VERIFIED",verify(Path("site"))["actual_DXF_dim_concrete_m3"])'
+          test -f site/r6p27-construction-review.html
       - name: Write deployment metadata
         run: |
           python - <<'PY'
@@ -879,6 +888,47 @@ jobs:
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5.0.1
+      - name: Verify live R6.27 original-drawing source and code arithmetic project product
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,time,urllib.request
+          owner,repo=os.environ["GITHUB_REPOSITORY"].split("/")
+          root="https://"+owner.lower()+".github.io/"+repo+"/"
+          def get(path,n):
+              req=urllib.request.Request(root+path+"?r6p27="+str(n),
+                  headers={"Cache-Control":"no-cache","User-Agent":"JP-SAR-R6P27-real-design-source-qa"})
+              return urllib.request.urlopen(req,timeout=25).read()
+          for attempt in range(18):
+              try:
+                  p="reports/r6p27/source-design-crosswalk.json"
+                  m=json.loads(get("reports/r6p27/source-design-sha256.json",attempt))
+                  raw=get(p,attempt)
+                  data=json.loads(raw)
+                  page=get("r6p27-construction-review.html",attempt)
+                  projects=get("projects.html",attempt).decode()
+                  assert m["schema"]=="jp.structural.r6p27.source_design_manifest.v1"
+                  assert not m["construction_approved"] and m["historical_F3_unsafe"]
+                  assert m["C4_code_minimum_ratio_failure"]
+                  assert m["source_geometry_count_footings"]==21
+                  assert m["source_geometry_count_GF_columns"]==23
+                  assert m["scheduled_concrete_m3"]==36.915
+                  assert m["actual_DXF_dim_concrete_m3"]==36.33
+                  assert data["original_F3_unsafe_retained"] is True
+                  assert data["construction_release"] is False
+                  assert sum(len(x["source_support_column_ids"]) for x in data["footings"])==23
+                  assert any(f["grid_axes"]==["G1"] and f["area_discrepancy_m2"]==-1.17 for f in data["footings"])
+                  assert data["column_schedule"][3]["reported_schedule_pct"]<1.0
+                  assert hashlib.sha256(raw).hexdigest()==m["files_sha256"][p]
+                  assert hashlib.sha256(page).hexdigest()==m["files_sha256"]["r6p27-construction-review.html"]
+                  assert b"NOT SAFE IN ONE WAY SHEAR" in page
+                  assert 'href="r6p27-construction-review.html"' in projects
+                  print("R6P27_LIVE_REAL_SOURCE_DIMENSIONS_RATIOS_FOOTINGS_AND_ENGINEERING_HOLDS_PASS")
+                  break
+              except Exception as e:
+                  if attempt==17:raise
+                  print("R6P27 CDN source not published",attempt+1,str(e)[:220])
+                  time.sleep(10)
+          PY
       - name: Verify live six-section portal navigation, source receipts and historical safety
         run: |
           python - <<'PY'

@@ -108,10 +108,11 @@ PAGES = {
       <article class="project-card"><div class="project-overline">PRJ-000007 / HISTEL BUILDERS · POKHARA-15</div><div class="project-card-head"><h3>Narayani Parajuli Residence</h3><span class="status-pill">Source-conditioned analysis · HOLD</span></div>
       <p>Only current real-project engine application. The source graph contains original ground-floor column and footing marks. Its upper-floor connections, applied loads and boundary conditions are assumed for the independent elastic-frame report.</p>
       <div class="project-facts"><div><small>Original GF columns</small><b>23</b></div><div><small>Original footing outlines</small><b>21</b></div><div><small>Modeled members</small><b data-num="members">132</b></div><div><small>Independent cases</small><b>4</b></div></div>
-      <div class="lead-actions"><a class="primary-link" href="r6p26-report.html">Open Narayani analysis report</a><a class="subtle-link" href="r6p25.html">Connection QA</a></div></article>
+      <div class="lead-actions"><a class="primary-link" href="r6p27-construction-review.html">Open drawing calculations and construction decisions</a><a class="subtle-link" href="r6p26-report.html">Original R6.26 OpenSees report</a><a class="subtle-link" href="r6p25.html">Connection QA</a></div></article>
       """),
       ("project-map","The project workspace", """
-      <div class="link-list"><a href="r6p26-report.html"><span>01 / MAIN OUTPUT</span><b>Independent six-chapter structural report</b><small>Actual signed elastic frame results and source-ledger review</small></a>
+      <div class="link-list"><a href="r6p27-construction-review.html"><span>01 / SOURCE-DERIVED CALCULATIONS · 2026-11-16</span><b>21 actual footings, column steel, trial actions and corrected design decisions</b><small>Concrete quantities, 21→23 support mapping, F3/G1/C4 issues with cited sources</small></a>
+      <a href="r6p26-report.html"><span>02 / ENGINE NUMERICS · R6.26</span><b>Independent six-chapter structural report</b><small>Signed elastic frame member and base reactions, unresolved full building design</small></a>
       <a href="r6p25.html"><span>02 / SOURCE REVIEW</span><b>Connection QA viewer</b><small>Original axis marks and assumed nearest-column ties</small></a>
       <a href="reports/r6p26/narayani-independent-frame-source.json"><span>03 / INPUTS</span><b>Normalized model and assumptions</b><small>Review exact model that the solver consumed</small></a>
       <a href="reports/r6p26/narayani-independent-frame-results.json"><span>04 / COMPUTATION</span><b>Independent numerical casebook</b><small>Full member actions, support reactions and displacements</small></a>
@@ -132,7 +133,7 @@ PAGES = {
       """)
     ],
     "right":{"title":"Narayani context","status":"ENGINEERING HOLD",
-      "groups":[("Working evidence",[("Read engine report","r6p26-report.html"),("Review connections","r6p25.html"),("View source JSON","reports/r6p26/narayani-independent-frame-source.json")]),
+      "groups":[("Working evidence",[("Drawings → actual calculations","r6p27-construction-review.html"),("Read R6.26 engine report","r6p26-report.html"),("Review connections","r6p25.html"),("View source JSON","reports/r6p26/narayani-independent-frame-source.json")]),
       ("Authoritative files",[("Drawing-derived Narayani geometry","https://github.com/FabinGurung/jp-drawing-coordination/tree/main/public/data/projects/narayani-parajuli"),("Geotechnical report","https://drive.google.com/file/d/13y0b0v8BiL2ooMXy0BFn2dtdSHWNOg2N/view"),("Controlled decisions · V000004","https://docs.google.com/document/d/1_YD1CdbeeylbgEaJrb44ITAcDI8g0rjMn6d0I-Nqp34/edit")])],
       "note":"Source geometry is not the same thing as professionally accepted connectivity. Unresolved safety findings remain visible."
     }
