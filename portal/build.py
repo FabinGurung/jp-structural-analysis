@@ -238,7 +238,7 @@ def verify(site:Path)->dict:
         require(all('href="'+p+'"' in s for p in ROUTE.values()),
                 "every page must link all six primary sections: "+item["path"])
         for ident,_,_ in PAGES[item["id"]]["sections"]:
-            require(f'id="{ident}"' in s and s.count(f'href="#{ident}"')==2,
+            require(f'id="{ident}"' in s and s.count(f'data-toc-for="{ident}"')==2,
                     "top AND left TOC anchor missing or duplicated "+item["path"]+" #"+ident)
     require("NOT SAFE IN ONE WAY SHEAR" in (site/"research.html").read_text(),
             "historical adverse F3 not disclosed")
