@@ -40,6 +40,13 @@ def test_original_sar_c4_longitudinal_ratio_below_nbc_2025_minimum(inputs):
     assert c4["minimum_NBC105_2025_gross_pct"]==1.0
     assert c4["code_comparison"].startswith("BELOW_1_PERCENT")
     assert d["original_F3_unsafe_retained"] and not d["construction_release"]
+    sections=d["source_beam_slab_reinforcement_arithmetic"]
+    assert len(sections)==6 and all(x["construction_issue_approved"] is False for x in sections)
+    assert sections[0]["nominal_rebar_area_mm2"]==pytest.approx(339.292,abs=.001)
+    assert sections[1]["nominal_rebar_area_mm2"]==pytest.approx(1005.31,abs=.01)
+    assert sections[2]["nominal_rebar_area_mm2"]==pytest.approx(515.22,abs=.01)
+    assert sections[3]["nominal_rebar_area_mm2"]==pytest.approx(565.487,abs=.001)
+    assert sections[-1]["nominal_rebar_area_mm2"]==pytest.approx(335.103,abs=.002)
 
 def test_publish_data_and_html_are_source_derived_and_hash_locked(inputs):
     cad,site=inputs
@@ -50,7 +57,7 @@ def test_publish_data_and_html_are_source_derived_and_hash_locked(inputs):
     page=(site/"r6p27-construction-review.html")
     text=page.read_text()
     for term in ("36.915","36.330","0.940","G1","NOT SAFE IN ONE WAY SHEAR",
-                 "id='loads'","id='members'","R6.26 OpenSees"):
+                 "id='loads'","id='members'","R6.26 OpenSees","Plinth beam","GF main beam","Slab top and bottom"):
         assert term in text,term
     data=json.loads((site/"reports/r6p27/source-design-crosswalk.json").read_text())
     assert len(data["footings"])==21 and data["source_Gf_column_count"]==23
