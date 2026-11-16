@@ -65,3 +65,19 @@ def test_publish_data_and_html_are_source_derived_and_hash_locked(inputs):
     page.write_text(text+"NOT_VERIFIED")
     with pytest.raises(ValueError,match="SHA256"):
         verify(site)
+
+def test_r6p26_chapter6_now_starts_with_real_source_calculations():
+    source=Path(__file__).resolve().parents[1]/"r6p26"/"report.html"
+    html=source.read_text(encoding="utf8")
+    start=html.index('<section class="chapter" id="design">')
+    end=html.index('<section class="chapter" id="annex">')
+    chapter=html[start:end]
+    for essential in ("36.915 m³","36.330 m³","0.585 m³","0.9404%",
+                      "NBC105:2025 Annex A, Clause 4.2.2(b)",
+                      "IF1","IF2","IF3","IF4","CF1","G1",
+                      "1,005.31 mm²","335.10 mm²",
+                      "r6p27-construction-review.html",
+                      "NOT SAFE IN ONE WAY SHEAR"):
+        assert essential in chapter,essential
+    assert chapter.index("Actual footing family dimensions") < chapter.index("Remaining governing capacity")
+    assert "issued-for-construction" in chapter.lower()
