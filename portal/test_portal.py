@@ -91,7 +91,7 @@ def test_six_pages_have_clear_navigation_toc_sticky_left_right_and_adjacent(site
         assert f'data-page="{k}"' in s
         assert len([a for a in ROUTE.values() if f'href="{a}"' in s])==6
         for section_id,_,_ in PAGES[k]["sections"]:
-            assert s.count(f'href="#{section_id}"')==2
+            assert s.count(f'data-toc-for="{section_id}"')==2
 
 def test_source_safety_hold_and_release_not_misclassified(site):
     build(site)
