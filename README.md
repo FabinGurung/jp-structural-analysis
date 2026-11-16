@@ -7,15 +7,15 @@ OpenSees/OpenSeesPy as the primary computational engine, explicit source
 provenance, normalized model contracts, fail-closed QA, transparent benchmarks,
 validation records, and reproducible reporting.
 
-## Development source
+## Current portal and canonical project workflow — 2026-11-16
 
-The current governed engine/source branch is:
+**The six main website sections:** [Home](https://fabingurung.github.io/jp-structural-analysis/), [Studio Standard](https://fabingurung.github.io/jp-structural-analysis/studio.html), [Projects](https://fabingurung.github.io/jp-structural-analysis/projects.html), [Developers](https://fabingurung.github.io/jp-structural-analysis/developers.html), [Research](https://fabingurung.github.io/jp-structural-analysis/research.html), [More](https://fabingurung.github.io/jp-structural-analysis/more.html).
 
-`engine/opensees-sar-v0.1`
+**Authoritative reuse:** [Studio Standard v1.0](portal/STUDIO_STANDARD.md) and [Blank project intake contract](portal/project-input-template-v1.json). [Agent instructions](AGENTS.md) include project/QA routing. The portal is generated from [curated sections](portal/content.py) after the original Pages engine and R6.26 source-derived report build. All original pages, experiments and evidence remain accessible through **More** and the preserved legacy routes.
 
-The `main` branch is intentionally a lightweight Pages-dispatch and navigation
-surface. Engine/product source has **not** been merged into main as a V0.1
-release.
+**Only Narayani PRJ-000007 uses the current source-derived engine.** [Narayani R6.26 independent HTML report](https://fabingurung.github.io/jp-structural-analysis/r6p26-report.html) — 4 tested 3D elastic frame scenarios, 132 source-conditioned members, 1,056 signed member-end rows and 92 support-reaction records, **not a complete building engineering design**. [R6.26 software milestone](https://github.com/FabinGurung/jp-structural-analysis/releases/tag/r6.26-report-preview) is a prerelease with F3 one-way shear **NOT SAFE** and remaining code/geometry holds.
+
+**Development source:** The historic governed engine's pinned workflow baseline is `f39c89ad55af18ea390a699af159f67f5fc8b517`; current `main` additionally contains independent `r6p23/` through `r6p26/` and the `portal/` presentation standard. Neither software milestone nor UI changes imply engineering approval or replace source Drive records.
 
 ## Public demo
 
