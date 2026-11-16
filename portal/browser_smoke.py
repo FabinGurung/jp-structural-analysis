@@ -48,7 +48,7 @@ def run(site:Path,output:Path):
                     })""")
                     assert sizes["document"]<=sizes["viewport"]+2,(route,name,sizes)
                     assert sizes["body"]<=sizes["viewport"]+2,(route,name,sizes)
-                    if name=="phone":
+                    if width<=780:
                         assert page.locator("#menu-toggle").is_visible(),route
                         assert not page.locator("#primary-nav").is_visible(),route
                         page.locator("#menu-toggle").click()
