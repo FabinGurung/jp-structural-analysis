@@ -205,7 +205,7 @@ PAGES = {
       ("open-debt","Outstanding structural debt (not suppressed)", """
       <div class="risk-list">
       <div><span class="risk-marker">01</span><div><b>Physical support and GF→FF→SF continuity</b><p>Verify individual beams, column stacks, slab/beam contacts, stairs and actual wall-bearing paths from current original drawings, not just a nearest-column hypothesis.</p></div></div>
-      <div><span class="risk-marker">02</span><div><b>F3 one-way shear: historically NOT SAFE</b><p>Recompute governing factored reactions and geometry-specific capacity; professional redesign and acceptance required.</p></div></div>
+      <div><span class="risk-marker">02</span><div><b>F3 is NOT SAFE IN ONE WAY SHEAR</b><p>Recompute governing factored reactions and geometry-specific capacity; professional redesign and acceptance required.</p></div></div>
       <div><span class="risk-marker">03</span><div><b>Full gravity/load zoning</b><p>Prove wall line assignments, slab shell areas, stair/corridor/terrace live loads and source-to-mass conservation.</p></div></div>
       <div><span class="risk-marker">04</span><div><b>NBC 105:2025 site seismic actions</b><p>Resolve geotechnical 2020 Type B versus older structural report Type D, apply current site class, spectrum, ductility, irregularity and displacement checks.</p></div></div>
       <div><span class="risk-marker">05</span><div><b>Actual frame/shell FE and mesh convergence</b><p>Real Narayani slab/opening shape, shell supports and physically equivalent 3-resolution sensitivity—not only synthetic 31→124 shell research.</p></div></div>
