@@ -113,3 +113,15 @@ def test_mutated_portal_file_must_fail_readback(site):
     p.write_text(p.read_text()+"<p>Unauthorized silent modification</p>")
     with pytest.raises(ValueError,match="tampered"):
         verify(site)
+
+def test_guide_preserves_f3_uncertainty_and_teaches_c4_code_scope():
+    from learning_system import SECTIONS
+    pages={slug:body for slug, _, body in SECTIONS}
+    footing=pages["worked-foundation"]
+    chapter6=pages["ch6"]
+    assert "NOT SAFE IN ONE WAY SHEAR" in footing
+    assert "without reading the original worksheet visually" in footing
+    assert "571 kN" not in footing and "600 kN" not in footing
+    assert "0.9404%" in chapter6 and "1.0%" in chapter6
+    assert "applicability of §4.2" in chapter6
+    assert "approved redesign" in chapter6
