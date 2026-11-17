@@ -414,8 +414,10 @@ def build(site:Path)->dict:
     workflows=[x for x in repo_paths if x.startswith(".github/workflows/") and x.endswith(".yml")]
     if len(workflows)<13 or set(x.rsplit("/",1)[-1] for x in workflows)!=set(WORKFLOW_ROLES):
         raise ValueError("System map workflow inventory changed; update workflow meanings before publish")
-    for name in ("index.html","studio.html","projects.html","developers.html","research.html","more.html",
-                 "r6p26-report.html","r6p25.html"):
+    # Portal's isolated browser QA builds only the six navigation pages and
+    # downloads R6.26 JSON; the full Pages publishing job builds all reports.
+    # Verify full source/report routes later in the production live CDN gate.
+    for name in ("index.html","studio.html","projects.html","developers.html","research.html","more.html"):
         if not (site/name).is_file():raise ValueError("System map missing required published site source "+name)
     guide=site/"original-report-guide.html"
     guide.write_text(render(
