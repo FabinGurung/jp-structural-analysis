@@ -429,7 +429,10 @@ def build(site:Path)->dict:
     # Counts and paths deliberately include this manifest and both new pages.
     paths=sorted(str(p.relative_to(site)) for p in site.rglob("*") if p.is_file()
                  and not p.name.startswith(".") and "__pycache__" not in p.parts)
-    if "site-file-inventory.json" not in paths:paths.append("site-file-inventory.json")
+    # portal-manifest is produced later in this builder, build-meta in the
+    # immediately subsequent Pages workflow step. Both become public files.
+    for planned in ("site-file-inventory.json","portal-manifest.json","build-meta.json"):
+        if planned not in paths:paths.append(planned)
     paths=sorted(set(paths))
     index={
       "schema":"jp.structural.portal.public_file_inventory.v1",
