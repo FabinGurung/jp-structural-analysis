@@ -92,6 +92,7 @@ SECTIONS=[
 <tr><th>6.5 Staircase · pp.53–54</th><td>Flight/landing thickness, flexural bars and shear</td><td>Riser 170mm, tread 254mm, width 1.20m, waist slab 150mm initially; source also adopts 127mm during trial calculations, provides Ø12 @5in for main flight</td><td>Follow one coherent geometric section and load path; the differing thickness entries require interpretation</td></tr>
 </tbody></table></div>
 <div class="source-fact"><strong>How the original chapter is organised</strong><p>Design output tables mix ETABS v20 headings with some ETABS 21 detailed design summaries; slabs/stairs are Excel-style worksheets and footings reference SAFE. They are separate calculation sources assembled into one report, not six identical engine outputs.</p></div>
+<div class="calc"><span>OUR SOURCE-BASED TAKEOFF, NOT A NUMBER PRINTED IN THE REVISED SAR</span><strong>IF1–IF4 and CF1, 21 footings × drawing nominal 0.50m thickness = 36.915 m³ per footing schedule</strong><p>The original native DXF outlines yield <strong>36.330 m³</strong> because G1 is drawn 1.8×1.8m instead of the IF3 schedule's 2.1×2.1m; difference 0.585 m³. These are quantities computed from the July 2026 drawings, not certified final casting instructions.</p></div>
 <p><a href="r6p27-construction-review.html">See our derived column/footing source takeoff and steel-area checks</a> while keeping the original report numbers separate from our independent trial results.</p>
 """),
 ("ch5","Chapter 5: how the whole building responds", """
