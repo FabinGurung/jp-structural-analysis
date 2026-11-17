@@ -114,14 +114,16 @@ def test_mutated_portal_file_must_fail_readback(site):
     with pytest.raises(ValueError,match="tampered"):
         verify(site)
 
-def test_guide_preserves_f3_uncertainty_and_teaches_c4_code_scope():
+def test_guide_preserves_visually_verified_f3_and_teaches_c4_code_scope():
     from learning_system import SECTIONS
     pages={slug:body for slug, _, body in SECTIONS}
     footing=pages["worked-foundation"]
     chapter6=pages["ch6"]
     assert "NOT SAFE IN ONE WAY SHEAR" in footing
-    assert "without reading the original worksheet visually" in footing
-    assert "571 kN" not in footing and "600 kN" not in footing
+    assert "visually checked" in footing and "PDF page 61" in footing
+    assert "571 kN" in footing and "600 kN" in footing
+    assert "194.22 kN/m²" in footing and "172.3 kN" in footing
+    assert "182.13 kN" in footing and "9.83 kN difference" in footing
     assert "0.9404%" in chapter6 and "1.0%" in chapter6
     assert "applicability of §4.2" in chapter6
     assert "approved redesign" in chapter6
