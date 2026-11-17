@@ -10,14 +10,14 @@ PAGES = {
       ("overview","What we have built", """
       <p>JP Structural Analysis is the first-party OpenSees/OpenSeesPy engine and reporting workstream. It works with Google Drive source records and our drawing repository, normalizes member and load evidence, runs independently computed structural response scenarios, and publishes an inspectable six-chapter report through GitHub Actions.</p>
       <div class="stat-grid"><div><small>Independently solved cases</small><strong data-num="cases">4</strong><span>Conditional 3D frame scenarios</span></div><div><small>Modeled frame members</small><strong data-num="members">132</strong><span>Source locations + assumed links</span></div><div><small>Member-end result rows</small><strong data-num="actionrows">1,056</strong><span>Signed forces / moments</span></div><div><small>Real projects onboarded</small><strong>1</strong><span>Narayani · PRJ-000007</span></div></div>
-      <div class="lead-actions"><a class="primary-link" href="projects.html">Open the Narayani project</a><a class="subtle-link" href="studio.html">Read the reusable Studio Standard</a></div>
+      <div class="lead-actions"><a class="primary-link" href="original-report-guide.html">Understand the original report first</a><a class="subtle-link" href="projects.html">Open the Narayani project</a><a class="subtle-link" href="studio.html">Read the reusable Studio Standard</a></div>
       """),
       ("workflow","How the system works", """
       <div class="flow-steps"><div><span>01</span><b>Sources</b><small>Original drawings, analysis and soil records in Drive</small></div><div><span>02</span><b>Normalize</b><small>Drawing axes, member IDs, provenance and conflicts</small></div><div><span>03</span><b>Calculate</b><small>OpenSees signed member actions and base reactions</small></div><div><span>04</span><b>Review</b><small>Equilibrium, source checks, design holds, exceptions</small></div><div><span>05</span><b>Publish</b><small>GitHub Actions, SHA256 evidence and Pages reports</small></div></div>
       <p class="micro-note">A passed software test proves that a specific model executes consistently. It does not prove all physical connections or code-based design checks are accepted.</p>
       """),
       ("current","Current product · Narayani", """
-      <div class="feature-panel"><div><p class="eyebrow">PRJ-000007 · POKHARA · SOURCE-CONDITIONED</p><h3>Narayani Parajuli — six-chapter independent report</h3><p>Actual drawing-derived ground-floor columns and footings, traceable assumed 3D connections, four OpenSees cases, signed member-force CSV, support reactions, displacement tables, and source exceptions in one reviewable report.</p><div class="inline-links"><a href="r6p26-report.html">View engine-generated report</a><a href="r6p25.html">Inspect assumed connections</a><a href="reports/r6p26/narayani-verified-manifest.json">Verify SHA256 receipt</a></div></div><div class="feature-art" aria-hidden="true"><div class="beam-icon">⌗</div><span>SOURCE → FRAME → REPORT</span></div></div>
+      <div class="feature-panel"><div><p class="eyebrow">PRJ-000007 · POKHARA · SOURCE-CONDITIONED</p><h3>Narayani Parajuli — six-chapter independent report</h3><p>Actual drawing-derived ground-floor columns and footings, traceable assumed 3D connections, four OpenSees cases, signed member-force CSV, support reactions, displacement tables, and source exceptions in one reviewable report.</p><div class="inline-links"><a href="original-report-guide.html">Original ETABS report · explained backwards</a><a href="r6p26-report.html">View engine-generated report</a><a href="r6p25.html">Inspect assumed connections</a><a href="reports/r6p26/narayani-verified-manifest.json">Verify SHA256 receipt</a></div></div><div class="feature-art" aria-hidden="true"><div class="beam-icon">⌗</div><span>SOURCE → FRAME → REPORT</span></div></div>
       <div class="caution"><strong>Do not treat the preview as design acceptance.</strong> Actual member continuity, slab and wall support, NBC 105:2025 seismic actions, foundation and reinforcement design are open. F3 remains <b>NOT SAFE IN ONE WAY SHEAR</b> in the source record.</div>
       """),
       ("milestones","Milestones and next work", """
@@ -29,7 +29,7 @@ PAGES = {
       "title":"At a glance",
       "status":"ONE ACTIVE PROJECT",
       "groups":[
-        ("Start here",[("Latest project report","r6p26-report.html"),("Reusable studio standard","studio.html"),("Projects register","projects.html")]),
+        ("Start here",[("Understand the original report (NEW)","original-report-guide.html"),("Website + Actions system tree (NEW)","system-map.html"),("Latest project report","r6p26-report.html"),("Reusable studio standard","studio.html"),("Projects register","projects.html")]),
         ("Live evidence",[("R6.26 source/result manifest","reports/r6p26/narayani-verified-manifest.json"),("R6.26 Actions QA","https://github.com/FabinGurung/jp-structural-analysis/actions/runs/43607241579"),("R6.26 software release","https://github.com/FabinGurung/jp-structural-analysis/releases/tag/r6.26-report-preview")]),
       ],
       "note":"F3 safety HOLD persists. Release status applies to code and reproducibility only."
@@ -108,10 +108,11 @@ PAGES = {
       <article class="project-card"><div class="project-overline">PRJ-000007 / HISTEL BUILDERS · POKHARA-15</div><div class="project-card-head"><h3>Narayani Parajuli Residence</h3><span class="status-pill">Source-conditioned analysis · HOLD</span></div>
       <p>Only current real-project engine application. The source graph contains original ground-floor column and footing marks. Its upper-floor connections, applied loads and boundary conditions are assumed for the independent elastic-frame report.</p>
       <div class="project-facts"><div><small>Original GF columns</small><b>23</b></div><div><small>Original footing outlines</small><b>21</b></div><div><small>Modeled members</small><b data-num="members">132</b></div><div><small>Independent cases</small><b>4</b></div></div>
-      <div class="lead-actions"><a class="primary-link" href="r6p27-construction-review.html">Open drawing calculations and construction decisions</a><a class="subtle-link" href="r6p26-report.html">Original R6.26 OpenSees report</a><a class="subtle-link" href="r6p25.html">Connection QA</a></div></article>
+      <div class="lead-actions"><a class="primary-link" href="original-report-guide.html">First: understand the original structural report</a><a class="subtle-link" href="r6p27-construction-review.html">Next: inspect drawing calculations</a><a class="subtle-link" href="r6p26-report.html">Original R6.26 OpenSees report</a><a class="subtle-link" href="r6p25.html">Connection QA</a></div></article>
       """),
       ("project-map","The project workspace", """
-      <div class="link-list"><a href="r6p27-construction-review.html"><span>01 / SOURCE-DERIVED CALCULATIONS · 2026-11-16</span><b>21 actual footings, column steel, trial actions and corrected design decisions</b><small>Concrete quantities, 21→23 support mapping, F3/G1/C4 issues with cited sources</small></a>
+      <div class="link-list"><a href="original-report-guide.html"><span>00 / LEARN · REVISED ETABS REPORT · 2026-11-17</span><b>Understand the original structural report: results → calculations → codes → inputs</b><small>Deep beginner-readable explanation, Chapters 6 to 1, worked example and original Drive sources</small></a>
+      <a href="r6p27-construction-review.html"><span>01 / SOURCE-DERIVED CALCULATIONS · 2026-11-16</span><b>21 actual footings, column steel, trial actions and corrected design decisions</b><small>Concrete quantities, 21→23 support mapping, F3/G1/C4 issues with cited sources</small></a>
       <a href="r6p26-report.html"><span>02 / ENGINE NUMERICS · R6.26</span><b>Independent six-chapter structural report</b><small>Signed elastic frame member and base reactions, unresolved full building design</small></a>
       <a href="r6p25.html"><span>02 / SOURCE REVIEW</span><b>Connection QA viewer</b><small>Original axis marks and assumed nearest-column ties</small></a>
       <a href="reports/r6p26/narayani-independent-frame-source.json"><span>03 / INPUTS</span><b>Normalized model and assumptions</b><small>Review exact model that the solver consumed</small></a>
@@ -133,7 +134,7 @@ PAGES = {
       """)
     ],
     "right":{"title":"Narayani context","status":"ENGINEERING HOLD",
-      "groups":[("Working evidence",[("Drawings → actual calculations","r6p27-construction-review.html"),("Read R6.26 engine report","r6p26-report.html"),("Review connections","r6p25.html"),("View source JSON","reports/r6p26/narayani-independent-frame-source.json")]),
+      "groups":[("Working evidence",[("Original report explained (START HERE)","original-report-guide.html"),("Drawings → actual calculations","r6p27-construction-review.html"),("Read R6.26 engine report","r6p26-report.html"),("Review connections","r6p25.html"),("View source JSON","reports/r6p26/narayani-independent-frame-source.json")]),
       ("Authoritative files",[("Drawing-derived Narayani geometry","https://github.com/FabinGurung/jp-drawing-coordination/tree/main/public/data/projects/narayani-parajuli"),("Geotechnical report","https://drive.google.com/file/d/13y0b0v8BiL2ooMXy0BFn2dtdSHWNOg2N/view"),("Controlled decisions · V000004","https://docs.google.com/document/d/1_YD1CdbeeylbgEaJrb44ITAcDI8g0rjMn6d0I-Nqp34/edit")])],
       "note":"Source geometry is not the same thing as professionally accepted connectivity. Unresolved safety findings remain visible."
     }
@@ -144,7 +145,7 @@ PAGES = {
     "status":"Numerical pipeline: PASS · Construction approval: HOLD",
     "sections":[
       ("environments","System map and source authority", """
-      <div class="flow-steps"><div><span>DRIVE</span><b>Originals</b><small>Human-approved sources</small></div><div><span>CAD</span><b>Drawing graph</b><small>Original DXF / member registers</small></div><div><span>SAR</span><b>Engine</b><small>OpenSees and source checks</small></div><div><span>CI</span><b>Actions</b><small>Re-run + fail on source drift</small></div><div><span>WEB</span><b>Pages</b><small>Review only, not acceptance</small></div></div>
+      <p><a href="system-map.html"><strong>Open the full tree of the current repository, GitHub Pages and all 13 Actions workflows.</strong></a> The explorer links each tracked source file and published file; it does not require knowing release numbers.</p><div class="flow-steps"><div><span>DRIVE</span><b>Originals</b><small>Human-approved sources</small></div><div><span>CAD</span><b>Drawing graph</b><small>Original DXF / member registers</small></div><div><span>SAR</span><b>Engine</b><small>OpenSees and source checks</small></div><div><span>CI</span><b>Actions</b><small>Re-run + fail on source drift</small></div><div><span>WEB</span><b>Pages</b><small>Review only, not acceptance</small></div></div>
       <p><a href="https://github.com/FabinGurung/jp-structural-analysis">This GitHub repository</a> owns the structural engine and report. <a href="https://github.com/FabinGurung/jp-drawing-coordination">Drawing Coordination</a> owns geometric models. <a href="https://github.com/FabinGurung/jp-a7-system-registry">A7 Registry</a> is only the federated directory, not a writer for this repository.</p>
       """),
       ("qa","Numerical QA and browser test runs", """
@@ -236,7 +237,9 @@ PAGES = {
     "status":"Historical routes preserved · No destructive migration",
     "sections":[
       ("library","Preserved historic website pages", """
-      <div class="link-list"><a href="legacy-home.html"><span>ARCHIVE / PRE-PORTAL</span><b>Previous structural-analysis homepage</b><small>Original pre-redesign navigation and landing content</small></a>
+      <div class="link-list"><a href="system-map.html"><span>CURRENT / SYSTEM EXPLAINER · 2026-11-17</span><b>Full repository, Pages and GitHub Actions hierarchy</b><small>All public generated paths and all workflow files; clear roles and links</small></a>
+      <a href="original-report-guide.html"><span>CURRENT / EDUCATION · 2026-11-17</span><b>Original Narayani structural report explained backwards</b><small>What final result requires, section by section</small></a>
+      <a href="legacy-home.html"><span>ARCHIVE / PRE-PORTAL</span><b>Previous structural-analysis homepage</b><small>Original pre-redesign navigation and landing content</small></a>
       <a href="legacy-more.html"><span>ARCHIVE / PRE-PORTAL</span><b>Earlier methods and learning guide</b><small>Long educational information, historic workflow explanations</small></a>
       <a href="report.html"><span>HISTORICAL · ORIGINAL ENGINE</span><b>Six-chapter legacy report book</b><small>Earlier first-party report experiments and detailed annex history</small></a>
       <a href="projects/index.html"><span>HISTORICAL / PROJECT INDEX</span><b>Previous project reports listing</b><small>Kept for existing links; only Narayani uses new project intake</small></a>

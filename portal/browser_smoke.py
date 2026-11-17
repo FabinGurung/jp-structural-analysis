@@ -66,6 +66,50 @@ def run(site:Path,output:Path):
                         assert "NOT SAFE" in page.locator("#actual-vs-assumed").inner_text()
                     if route=="research.html":
                         assert "NOT SAFE" in page.locator("#open-debt").inner_text()
+                # Explicit learning pages: same real browser, source-bound facts,
+                # complete tree readability, sticky/upper TOC and mobile menu.
+                for route in ("original-report-guide.html","system-map.html"):
+                    resp=page.goto(base+route,wait_until="networkidle")
+                    assert resp is not None and resp.status==200,(route,resp)
+                    expected=13 if route=="original-report-guide.html" else 7
+                    assert page.locator(".guide-section").count()==expected,(route,name)
+                    assert page.locator(".guide-topnav a").count()==expected,(route,name)
+                    assert page.locator(".guide-right").count()==1,(route,name)
+                    assert page.locator("#primary-nav a").count()==6,(route,name)
+                    for link in page.locator(".guide-topnav a").all():
+                        href=link.get_attribute("href")
+                        assert href and page.locator(href).count()==1,(route,href)
+                    if route=="original-report-guide.html":
+                        for token in ("36.915","0.9404%","894.9803",
+                                      "Chapter 6","Chapter 5","Chapter 1",
+                                      "NOT SAFE IN ONE WAY SHEAR"):
+                            assert token in page.locator("#guide-main").inner_text(),token
+                        assert page.locator('a[href="#worked-foundation"]').count()>=1
+                        assert page.locator('a[href="r6p27-construction-review.html"]').count()>=1
+                    else:
+                        assert page.locator('a[href="site-file-inventory.json"]').count()>=1
+                        for wf in ("pages.yml","portal-v1-qa.yml",
+                                   "r6p26-report-qa.yml","r6p27-source-design-qa.yml"):
+                            assert wf in page.content(),wf
+                        assert "complete actual file inventory" in page.content().lower()
+                    sizes=page.evaluate("""({
+                       viewport:window.innerWidth,
+                       document:document.documentElement.scrollWidth,
+                       body:document.body.scrollWidth
+                    })""")
+                    assert sizes["document"]<=sizes["viewport"]+2,(route,name,sizes)
+                    assert sizes["body"]<=sizes["viewport"]+2,(route,name,sizes)
+                    if width<=780:
+                        assert page.locator("#menu-toggle").is_visible(),route
+                        assert not page.locator("#primary-nav").is_visible(),route
+                        page.locator("#menu-toggle").click()
+                        assert page.locator("#primary-nav").is_visible(),route
+                        page.locator("#menu-toggle").click()
+                        assert not page.locator("#primary-nav").is_visible(),route
+                    if name in ("phone","desktop"):
+                        target=output/(name+"-"+route.replace(".html","")+".png")
+                        page.screenshot(path=str(target),full_page=False)
+                        assert target.stat().st_size>10000,(target,target.stat().st_size)
                 for route in (("index.html","studio.html","projects.html") if name=="phone" else
                               ("index.html","developers.html","research.html")):
                     page.goto(base+route,wait_until="networkidle")

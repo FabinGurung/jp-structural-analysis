@@ -18,6 +18,7 @@ import sys
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE))
 from content import PAGES
+from learning_system import build as build_study_and_system_pages, verify as verify_study_and_system_pages
 
 SCHEMA="jp.structural.portal.six_section.v1"
 VERSION="1.0.0"
@@ -191,6 +192,9 @@ def build(site:Path)->dict:
         shutil.copyfile(HERE/src_name,target)
     for current in PRIMARY:
         (site/ROUTE[current]).write_text(page_card(current,src),encoding="utf8")
+    # Build the original report educational study + exact repo/Pages/Actions file trees.
+    # This is a read-only presentation artifact; the source PDFs remain in Drive.
+    educational=build_study_and_system_pages(site)
     manifest={
       "schema":SCHEMA,"version":VERSION,"build_date":BUILD_DATE,
       "active_real_projects":["PRJ-000007"],
@@ -204,11 +208,18 @@ def build(site:Path)->dict:
       "real_building_engineering_approval":False,
       "historical_F3_one_way_shear_safe":False,
       "verified_source_model_ready_for_full_design":False,
+      "original_report_explainer":{"page":"original-report-guide.html",
+            "reading_order":"6→5→4→3→2→1","primary_source":"revised G+1.5 PDF",
+            "educational_only":True},
+      "system_file_tree":{"page":"system-map.html","manifest":"site-file-inventory.json",
+            "public_files_in_inventory":educational["files"],
+            "action_workflow_definitions":educational["workflows"]},
       "legacy_routes_preserved":["legacy-home.html","legacy-more.html","report.html",
           "projects/index.html","r6p23.html","r6p25.html","r6p26-report.html"],
       "files_sha256":{},
     }
-    files=[*ROUTE.values(),"site-system.css","site-system.js",
+    files=[*ROUTE.values(),"original-report-guide.html","system-map.html","site-file-inventory.json",
+           "site-system.css","site-system.js",
            "standards/studio-standard-v1.md","standards/project-input-template-v1.json",
            "legacy-home.html","legacy-more.html"]
     manifest["files_sha256"]={f:sha(site/f) for f in sorted(files)}
@@ -226,6 +237,13 @@ def verify(site:Path)->dict:
             "unsafe building state must not be promoted")
     require(len(m["navigation"])==6 and all(q["toc_count"]>=4 for q in m["navigation"]),
             "six-page top and left nav incomplete")
+    study=verify_study_and_system_pages(site)
+    require(study["workflows"]==13 and study["guide_sections"]>=12,
+            "original report/source code teaching system failed")
+    require(m.get("original_report_explainer",{}).get("educational_only") is True,
+            "original report guide cannot be a construction design approval")
+    require(m.get("system_file_tree",{}).get("action_workflow_definitions")==13,
+            "current GitHub Actions inventory absent")
     for f,digest in m["files_sha256"].items():
         require((site/f).is_file() and sha(site/f)==digest,
                 "source/output portal asset tampered: "+f)
