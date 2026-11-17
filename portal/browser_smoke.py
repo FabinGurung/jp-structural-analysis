@@ -71,7 +71,7 @@ def run(site:Path,output:Path):
                 for route in ("original-report-guide.html","system-map.html"):
                     resp=page.goto(base+route,wait_until="networkidle")
                     assert resp is not None and resp.status==200,(route,resp)
-                    expected=12 if route=="original-report-guide.html" else 7
+                    expected=13 if route=="original-report-guide.html" else 7
                     assert page.locator(".guide-section").count()==expected,(route,name)
                     assert page.locator(".guide-topnav a").count()==expected,(route,name)
                     assert page.locator(".guide-right").count()==1,(route,name)
