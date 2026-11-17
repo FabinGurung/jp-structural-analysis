@@ -839,6 +839,15 @@ jobs:
           PYTHONPATH=r6p23-main python -m r6p26.publish --cad-root r6p25-cad-source --site-dir site
           PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p26.publish import verify; print("R6P26_SOURCE_AND_FE_RESULTS_VERIFIED", verify(Path("site"))["result_sha256"])'
           node --check site/r6p26-report.js
+      - name: Compute R6.27 original DXF footage, code minimum column steel ratio and footing-to-reaction crosswalk
+        env:
+          R6P25_CAD_ROOT: r6p25-cad-source
+          R6P27_SITE: site
+        run: |
+          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/r6p27/test_source_design.py
+          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import publish; print("R6P27_REAL_SOURCE_CROSSWALK",publish(Path("r6p25-cad-source"),Path("site"))["source_original_DXF_sha"])'
+          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import verify; print("R6P27_ACTUAL_DRAWING_AND_ACTION_RECONCILIATION_VERIFIED",verify(Path("site"))["actual_DXF_dim_concrete_m3"])'
+          test -f site/r6p27-construction-review.html
       - name: Apply six-section Studio / Projects / Developers / Research portal without deleting legacy sources
         run: |
           PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_portal.py
@@ -850,15 +859,10 @@ jobs:
           test -f site/r6p26-report.html
           test -f site/report.html
           test -f site/projects/index.html
-      - name: Compute R6.27 original DXF footage, code minimum column steel ratio and footing-to-reaction crosswalk
-        env:
-          R6P25_CAD_ROOT: r6p25-cad-source
-          R6P27_SITE: site
-        run: |
-          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/r6p27/test_source_design.py
-          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import publish; print("R6P27_REAL_SOURCE_CROSSWALK",publish(Path("r6p25-cad-source"),Path("site"))["source_original_DXF_sha"])'
-          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import verify; print("R6P27_ACTUAL_DRAWING_AND_ACTION_RECONCILIATION_VERIFIED",verify(Path("site"))["actual_DXF_dim_concrete_m3"])'
-          test -f site/r6p27-construction-review.html
+          test -f site/original-report-guide.html
+          test -f site/system-map.html
+          test -f site/site-file-inventory.json
+          PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from portal.learning_system import verify; print("ORIGINAL_REPORT_REVERSE_STUDY_AND_COMPLETE_REPO_PAGES_ACTIONS_TREE",verify(Path("site")))'
       - name: Write deployment metadata
         run: |
           python - <<'PY'
@@ -927,6 +931,49 @@ jobs:
               except Exception as e:
                   if attempt==17:raise
                   print("R6P27 CDN source not published",attempt+1,str(e)[:220])
+                  time.sleep(10)
+          PY
+      - name: Verify live original ETABS explanation and complete public site/Actions/repository trees
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,time,urllib.request
+          owner,repo=os.environ["GITHUB_REPOSITORY"].split("/")
+          base="https://"+owner.lower()+".github.io/"+repo+"/"
+          names=("original-report-guide.html","system-map.html","site-file-inventory.json")
+          def read(name,attempt):
+              request=urllib.request.Request(base+name+"?edu="+str(attempt),
+                  headers={"User-Agent":"JP-Original-SAR-Education-System-Tree-UI-QA",
+                           "Cache-Control":"no-cache"})
+              return urllib.request.urlopen(request,timeout=30).read()
+          for attempt in range(18):
+              try:
+                  raw=read("portal-manifest.json",attempt)
+                  m=json.loads(raw)
+                  g=read(names[0],attempt)
+                  x=read(names[1],attempt)
+                  i=json.loads(read(names[2],attempt))
+                  assert m["original_report_explainer"]["educational_only"] is True
+                  assert m["original_report_explainer"]["reading_order"]=="6→5→4→3→2→1"
+                  assert m["system_file_tree"]["action_workflow_definitions"]==13
+                  assert m["system_file_tree"]["public_files_in_inventory"]==i["count"]
+                  for name,data in zip(names,(g,x,read(names[2],attempt))):
+                      assert hashlib.sha256(data).hexdigest()==m["files_sha256"][name],name
+                  assert i["count"]>=30
+                  assert i["count"]==len(set(i["files"]))
+                  assert "r6p27-construction-review.html" in i["files"]
+                  for expected in ("NOT SAFE IN ONE WAY SHEAR","36.915","0.9404",
+                                   "Chapter 6","Chapter 1","2.6.4"):
+                      assert expected in g.decode(),expected
+                  for expected in ("pages.yml","r6p27-source-design-qa.yml",
+                                   "r6p26-release.yml","site-file-inventory.json"):
+                      assert expected in x.decode(),expected
+                  assert b"<nav" in g and b'guide-left' in g and b'guide-right' in g
+                  print("LIVE_ORIGINAL_REPORT_BACKWARDS_GUIDE_FULL_REPOSITORY_PAGES_ACTIONS_TREE_SHA256_PASS",
+                        i["count"],"files and 13 workflow definitions")
+                  break
+              except Exception as exc:
+                  if attempt==17:raise
+                  print("Education/tree Pages CDN not published",attempt+1,str(exc)[:200])
                   time.sleep(10)
           PY
       - name: Verify live six-section portal navigation, source receipts and historical safety
