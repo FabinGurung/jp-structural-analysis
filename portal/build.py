@@ -256,7 +256,7 @@ def verify(site:Path)->dict:
                 and 'class="page-adjacent"' in s,
                 "four pane portal navigation or bottom links missing "+item["path"])
         require(all('href="'+p+'"' in s for p in ROUTE.values()),
-                "every page must link all six primary sections: "+item["path"])
+                "every page must link all four primary sections: "+item["path"])
         for ident,_,_ in PAGES[item["id"]]["sections"]:
             require(f'id="{ident}"' in s and s.count(f'data-toc-for="{ident}"')==2,
                     "top AND left TOC anchor missing or duplicated "+item["path"]+" #"+ident)
