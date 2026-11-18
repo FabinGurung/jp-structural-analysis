@@ -17,15 +17,14 @@ import sys
 
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE))
-from content import PAGES
+from curated_four import PAGES
 from learning_system import build as build_study_and_system_pages, verify as verify_study_and_system_pages
 
-SCHEMA="jp.structural.portal.six_section.v1"
-VERSION="1.0.0"
-BUILD_DATE="2026-11-16"
-PRIMARY=("home","studio","projects","developers","research","more")
-ROUTE={"home":"index.html","studio":"studio.html","projects":"projects.html",
-       "developers":"developers.html","research":"research.html","more":"more.html"}
+SCHEMA="jp.structural.portal.four_section.v2"
+VERSION="2.0.0"
+BUILD_DATE="2026-11-18"
+PRIMARY=("home","studio","projects","more")
+ROUTE={"home":"index.html","studio":"studio.html","projects":"projects.html","more":"more.html"}
 PAGES_URL="https://fabingurung.github.io/jp-structural-analysis/"
 R626_SHA="1d6394d1d871b070d17f056b6eec4c74efdfb3af"
 
@@ -131,14 +130,14 @@ def page_card(current,metrics):
 <header class="global-header">
  <div class="header-inner">
   <a class="brand" href="index.html" aria-label="JP Structural Analysis homepage"><span class="brand-mark">JP</span><span class="brand-copy">STRUCTURAL<span> ANALYSIS</span><small>FIRST-PARTY ENGINE · RESEARCH</small></span></a>
-  <div class="header-meta"><span class="meta-dot"></span> ENGINEERING REVIEW PLATFORM <span class="meta-divider">/</span> V1.0</div>
+  <div class="header-meta"><span class="meta-dot"></span> ENGINEERING REVIEW PLATFORM <span class="meta-divider">/</span> V2.0</div>
   <button type="button" id="menu-toggle" class="menu-toggle" aria-expanded="false" aria-controls="primary-nav"><span>Menu</span><span aria-hidden="true">☰</span></button>
   <nav id="primary-nav" class="primary-nav" aria-label="Primary site navigation">{nav(current)}</nav>
  </div>
 </header>
 <div class="site-shell">
  <div class="intro-wrap">
-   <div class="micro-header"><span>{escape(page["eyebrow"])}</span><span>R6.26 SOFTWARE PREVIEW · {BUILD_DATE}</span></div>
+   <div class="micro-header"><span>{escape(page["eyebrow"])}</span><span>R6.28 SOURCE MILESTONE · {BUILD_DATE}</span></div>
    <div class="intro-main"><div><p class="intro-signal"><span class="signal-dot"></span>{escape(page["status"])}</p>
      <h1>{escape(page["title"])}</h1><p class="page-deck">{escape(page["deck"])}</p>
    </div><div class="intro-aside" aria-hidden="true"><span class="intro-cross">✳</span><span>STRUCTURE <b>→</b> EVIDENCE</span></div></div>
@@ -161,9 +160,9 @@ def page_card(current,metrics):
    {right_pane(page)}
  </div>
 </div>
-<footer class="global-footer"><div class="footer-inner"><div><strong>JP Structural Analysis</strong><p>First-party OpenSees engine · Pokhara source project · Research and design HOLD where unresolved.</p></div>
- <div><a href="studio.html#governance">Source governance</a><a href="developers.html#qa">Verified QA</a><a href="more.html#library">Historical library</a></div>
- <span>© 2026 · R6.26 software preview · {VERSION}</span></div></footer></body></html>'''
+<footer class="global-footer"><div class="footer-inner"><div><strong>JP Structural Analysis</strong><p>Original project sources in Drive · independent calculations and historical studies indexed under More.</p></div>
+ <div><a href="studio.html#standard-purpose">Source governance</a><a href="more.html#developers">Developer QA</a><a href="more.html#archives">Historical library</a></div>
+ <span>© 2026 · R6.28 source verification · {VERSION}</span></div></footer></body></html>'''
 
 def build(site:Path)->dict:
     src=load_approved_results(site)
@@ -194,6 +193,8 @@ def build(site:Path)->dict:
         (site/ROUTE[current]).write_text(page_card(current,src),encoding="utf8")
     # Build the original report educational study + exact repo/Pages/Actions file trees.
     # This is a read-only presentation artifact; the source PDFs remain in Drive.
+    for old,target in (("developers.html","more.html#developers"),("research.html","more.html#research")):
+        (site/old).write_text('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="refresh" content="0;url='+target+'"></head><body><p>Section moved to <a href="'+target+'">More</a>.</p></body></html>',encoding="utf8")
     educational=build_study_and_system_pages(site)
     manifest={
       "schema":SCHEMA,"version":VERSION,"build_date":BUILD_DATE,
@@ -208,17 +209,18 @@ def build(site:Path)->dict:
       "real_building_engineering_approval":False,
       "historical_F3_one_way_shear_safe":False,
       "verified_source_model_ready_for_full_design":False,
+      "independent_report_explainer":{"page":"independent-report-guide.html","reading_order":"output→response→model→method→inputs→purpose","educational_only":True},
       "original_report_explainer":{"page":"original-report-guide.html",
             "reading_order":"6→5→4→3→2→1","primary_source":"revised G+1.5 PDF",
             "educational_only":True},
       "system_file_tree":{"page":"system-map.html","manifest":"site-file-inventory.json",
             "public_files_in_inventory":educational["files"],
             "action_workflow_definitions":educational["workflows"]},
-      "legacy_routes_preserved":["legacy-home.html","legacy-more.html","report.html",
+      "legacy_routes_preserved":["legacy-home.html","legacy-more.html","developers.html","research.html","report.html",
           "projects/index.html","r6p23.html","r6p25.html","r6p26-report.html"],
       "files_sha256":{},
     }
-    files=[*ROUTE.values(),"original-report-guide.html","system-map.html","site-file-inventory.json",
+    files=[*ROUTE.values(),"developers.html","research.html","original-report-guide.html","independent-report-guide.html","system-map.html","site-file-inventory.json",
            "site-system.css","site-system.js",
            "standards/studio-standard-v1.md","standards/project-input-template-v1.json",
            "legacy-home.html","legacy-more.html"]
@@ -235,8 +237,8 @@ def verify(site:Path)->dict:
     require(m["real_building_engineering_approval"] is False
             and m["historical_F3_one_way_shear_safe"] is False,
             "unsafe building state must not be promoted")
-    require(len(m["navigation"])==6 and all(q["toc_count"]>=4 for q in m["navigation"]),
-            "six-page top and left nav incomplete")
+    require(len(m["navigation"])==4 and all(q["toc_count"]>=4 for q in m["navigation"]),
+            "four-page top and left nav incomplete")
     study=verify_study_and_system_pages(site)
     require(study["workflows"]==14 and study["guide_sections"]>=12,
             "original report/source code teaching system failed")
@@ -254,14 +256,16 @@ def verify(site:Path)->dict:
                 and 'class="page-adjacent"' in s,
                 "four pane portal navigation or bottom links missing "+item["path"])
         require(all('href="'+p+'"' in s for p in ROUTE.values()),
-                "every page must link all six primary sections: "+item["path"])
+                "every page must link all four primary sections: "+item["path"])
         for ident,_,_ in PAGES[item["id"]]["sections"]:
             require(f'id="{ident}"' in s and s.count(f'data-toc-for="{ident}"')==2,
                     "top AND left TOC anchor missing or duplicated "+item["path"]+" #"+ident)
-    require("NOT SAFE IN ONE WAY SHEAR" in (site/"research.html").read_text(),
+    require("NOT SAFE IN ONE WAY SHEAR" in (site/"more.html").read_text(),
             "historical adverse F3 not disclosed")
-    require("r6p26-report.html" in (site/"projects.html").read_text(),
-            "active project's independent report must be discoverable")
+    require(all(x in (site/"projects.html").read_text() for x in ("purpose","inputs","methods","model","response","design")),
+            "six manual project stages missing")
+    require("r6p26-report.html" in (site/"more.html").read_text(),
+            "historical independent report must remain accessible under More")
     require("other" not in m["active_real_projects"],
             "fake project")
     return m
@@ -272,7 +276,7 @@ def main():
     p.add_argument("--verify-only",action="store_true")
     args=p.parse_args()
     manifest=verify(args.site_dir) if args.verify_only else build(args.site_dir)
-    print("JP_PORTAL_V1_6_PAGES_INTEGRITY_PASS",
+    print("JP_PORTAL_V2_4_PAGES_INTEGRITY_PASS",
           json.dumps({"version":manifest["version"],"sha":manifest["source_report_results_sha256"],
                       "pages":len(manifest["navigation"]),"active_projects":len(manifest["active_real_projects"]),
                       "engineering_approved":manifest["real_building_engineering_approval"]}))

@@ -860,7 +860,7 @@ jobs:
           assert d["physical_footing_code_compliant"] is None
           print("F3_DOCUMENTED_DISCREPANCY_NOT_A_STRUCTURAL_ACCEPTANCE")
           PY
-      - name: Apply six-section Studio / Projects / Developers / Research portal without deleting legacy sources
+      - name: Apply four-section Home / Studio / Projects / More portal without deleting historical outputs
         run: |
           PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_portal.py
           PYTHONPATH=r6p23-main python r6p23-main/portal/build.py --site-dir site
@@ -872,6 +872,7 @@ jobs:
           test -f site/report.html
           test -f site/projects/index.html
           test -f site/original-report-guide.html
+          test -f site/independent-report-guide.html
           test -f site/system-map.html
           test -f site/site-file-inventory.json
           PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from portal.learning_system import verify; print("ORIGINAL_REPORT_REVERSE_STUDY_AND_COMPLETE_REPO_PAGES_ACTIONS_TREE",verify(Path("site")))'
@@ -937,7 +938,7 @@ jobs:
                   assert hashlib.sha256(raw).hexdigest()==m["files_sha256"][p]
                   assert hashlib.sha256(page).hexdigest()==m["files_sha256"]["r6p27-construction-review.html"]
                   assert b"NOT SAFE IN ONE WAY SHEAR" in page
-                  assert 'href="r6p27-construction-review.html"' in projects
+                  assert 'href="r6p27-construction-review.html"' in get("more.html",attempt).decode()
                   print("R6P27_LIVE_REAL_SOURCE_DIMENSIONS_RATIOS_FOOTINGS_AND_ENGINEERING_HOLDS_PASS")
                   break
               except Exception as e:
@@ -951,7 +952,7 @@ jobs:
           import hashlib,json,os,time,urllib.request
           owner,repo=os.environ["GITHUB_REPOSITORY"].split("/")
           base="https://"+owner.lower()+".github.io/"+repo+"/"
-          names=("original-report-guide.html","system-map.html","site-file-inventory.json")
+          names=("original-report-guide.html","independent-report-guide.html","system-map.html","site-file-inventory.json")
           def read(name,attempt):
               request=urllib.request.Request(base+name+"?edu="+str(attempt),
                   headers={"User-Agent":"JP-Original-SAR-Education-System-Tree-UI-QA",
@@ -962,17 +963,20 @@ jobs:
                   raw=read("portal-manifest.json",attempt)
                   m=json.loads(raw)
                   g=read(names[0],attempt)
-                  x=read(names[1],attempt)
-                  i=json.loads(read(names[2],attempt))
+                  own=read(names[1],attempt)
+                  x=read(names[2],attempt)
+                  i=json.loads(read(names[3],attempt))
                   assert m["original_report_explainer"]["educational_only"] is True
                   assert m["original_report_explainer"]["reading_order"]=="6→5→4→3→2→1"
                   assert m["system_file_tree"]["action_workflow_definitions"]==14
                   assert m["system_file_tree"]["public_files_in_inventory"]==i["count"]
-                  for name,data in zip(names,(g,x,read(names[2],attempt))):
+                  for name,data in zip(names,(g,own,x,read(names[3],attempt))):
                       assert hashlib.sha256(data).hexdigest()==m["files_sha256"][name],name
                   assert i["count"]>=30
                   assert i["count"]==len(set(i["files"]))
                   assert "r6p27-construction-review.html" in i["files"]
+                  assert "independent-report-guide.html" in i["files"]
+                  assert "OpenSeesPy" in own.decode() and "1,056" in own.decode()
                   for expected in ("NOT SAFE IN ONE WAY SHEAR","36.915","0.9404",
                                    "Chapter 6","Chapter 1","2.6.4"):
                       assert expected in g.decode(),expected
@@ -988,13 +992,13 @@ jobs:
                   print("Education/tree Pages CDN not published",attempt+1,str(exc)[:200])
                   time.sleep(10)
           PY
-      - name: Verify live six-section portal navigation, source receipts and historical safety
+      - name: Verify live four-section portal navigation, resources and preserved source
         run: |
           python - <<'PY'
           import json,os,time,urllib.request,hashlib
           owner,repo=os.environ["GITHUB_REPOSITORY"].split("/")
           base="https://"+owner.lower()+".github.io/"+repo+"/"
-          routes=("index.html","studio.html","projects.html","developers.html","research.html","more.html")
+          routes=("index.html","studio.html","projects.html","more.html")
           def fetch(path,attempt):
               req=urllib.request.Request(base+path+"?portal_v1="+str(attempt),
                 headers={"Cache-Control":"no-cache","User-Agent":"JP-Portal-v1-Live-Source-Readback"})
@@ -1002,13 +1006,13 @@ jobs:
           for attempt in range(18):
               try:
                   receipt=json.loads(fetch("portal-manifest.json",attempt))
-                  assert receipt["schema"]=="jp.structural.portal.six_section.v1"
-                  assert receipt["version"]=="1.0.0"
+                  assert receipt["schema"]=="jp.structural.portal.four_section.v2"
+                  assert receipt["version"]=="2.0.0"
                   assert receipt["active_real_projects"]==["PRJ-000007"]
                   assert receipt["real_building_engineering_approval"] is False
                   assert receipt["historical_F3_one_way_shear_safe"] is False
                   assert receipt["frozen_engine_software_sha"]=="1d6394d1d871b070d17f056b6eec4c74efdfb3af"
-                  assert len(receipt["navigation"])==6
+                  assert len(receipt["navigation"])==4
                   for path in routes:
                       raw=fetch(path,attempt)
                       assert hashlib.sha256(raw).hexdigest()==receipt["files_sha256"][path],path
@@ -1019,11 +1023,15 @@ jobs:
                   standard=fetch("standards/studio-standard-v1.md",attempt).decode("utf8")
                   assert all("V"+str(i) in standard for i in range(1,8))
                   assert "Do not copy Narayani" in standard
-                  assert "NOT SAFE IN ONE WAY SHEAR" in fetch("research.html",attempt).decode()
+                  assert "NOT SAFE IN ONE WAY SHEAR" in fetch("more.html",attempt).decode()
+                  assert "r6p26-report.html" not in fetch("projects.html",attempt).decode()
+                  assert "Original" in fetch("more.html",attempt).decode()
                   assert "Narayani" in fetch("projects.html",attempt).decode()
                   for legacy in ("legacy-home.html","legacy-more.html","r6p26-report.html","r6p25.html","r6p23.html","report.html"):
                       assert len(fetch(legacy,attempt))>100
-                  print("JP_PORTAL_SIX_SECTION_LIVE_SITE_AND_IMMUTABLE_SOURCE_PASS")
+                  for alias in ("developers.html","research.html"):
+                      assert b"more.html#" in fetch(alias,attempt)
+                  print("JP_PORTAL_FOUR_SECTION_LIVE_SITE_AND_PRESERVED_SOURCE_PASS")
                   break
               except Exception as err:
                   if attempt==17:raise

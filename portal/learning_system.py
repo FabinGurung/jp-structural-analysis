@@ -26,7 +26,7 @@ BASE="https://fabingurung.github.io/jp-structural-analysis/"
 VERSION="2026-11-17"
 WORKFLOW_ROLES={
  "pages.yml":("PUBLICATION", "Canonical build → site generation → Pages upload → deployment → live source/HTML/JSON verification"),
- "portal-v1-qa.yml":("WEBSITE QA", "Test six-tab navigation, accessibility/layout, 390/768/1440px Chromium and source receipts"),
+ "portal-v1-qa.yml":("WEBSITE QA", "Test four-route navigation, accessibility/layout, 390/768/1440px Chromium and source receipts"),
  "f3-shear-release.yml":("SOURCE VERIFICATION RELEASE", "Freeze independent original F3 worksheet reconstruction and strictly non-approved one-way shear comparison"),
  "r6p27-source-design-qa.yml":("PROJECT ENGINEERING INPUT QA", "Pin real Narayani drawing source, regenerate OpenSees, map 21 footings to 23 columns and verify sourced quantities/code-area screens"),
  "r6p26-report-qa.yml":("PROJECT FE QA", "Recalculate source-conditioned Narayani signed FE actions; verify equilibrium and 390px report UI"),
@@ -187,6 +187,36 @@ SOURCES=[
  ("System map and complete file trees","system-map.html")
 ]
 
+INDEPENDENT_SECTIONS=[
+ ("goal","What the final structural report should deliver","""
+ <p>Read our independent report <strong>backwards</strong>, starting with the actual building results you want: full footing, column, beam, slab and staircase designs, reinforcement and details. Our R6.26 report is a source-conditioned analysis study, not that complete final design. <a href="projects.html#design">See Narayani Stage 06</a>.</p>
+ """),
+ ("design","What design outputs does our current engine actually provide?","""
+ <p>Our current independent solver does <em>not</em> independently design and approve every foundation, beam-column joint, slab, staircase or bar schedule. The <a href="r6p27-construction-review.html">R6.27 drawing-source crosswalk</a> separately performs footing quantities and steel-area arithmetic. The <a href="data/narayani-f3-oneway-verification.v1.json">R6.28 F3 worksheet verifier</a> compares published calculations under stated assumptions; neither is a complete design engine.</p>
+ """),
+ ("response","What did R6.26 independently calculate?","""
+ <p>It ran four linear elastic frame cases <strong>DL, LL, PX10 and PY10</strong> on a source-conditioned 132-member representation, storing 1,056 signed member-end records and 92 support-reaction records. The published report includes displacement and force tables and equilibrium checks. These are <em>trial-case actions</em>, not the original ETABS ULS/SLS seismic envelope or physical member capacities. <a href="r6p26-report.html">Open generated report</a>.</p>
+ """),
+ ("model","Which structural model produced those forces?","""
+ <p><a href="r6p25.html">Source-derived ground-floor columns and segments</a> were extended to assumed upper storeys. Candidate beam endpoints were mapped to nearby column joints. The 3D connectivity is a declared modelling hypothesis. A visible connection in the viewer does not establish the original engineer's ETABS joint, slab shell, opening or diaphragm.</p>
+ """),
+ ("method","What computational method was used?","""
+ <p>R6.26 uses <strong>OpenSeesPy elastic 3D frame calculations</strong> with source-conditioned geometry and declared load proxies. Tests check signed member/end actions, reaction equilibrium and reproducible JSON. Our separate <a href="r6p23.html">R6.23 ShellMITC4 research</a> studies shell/diaphragm behaviour on bounded cases; it is not silently joined to the R6.26 project as the original physical floor system.</p>
+ """),
+ ("inputs","Where did the independent model's inputs come from?","""
+ <p>The original revised <a href="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view">ETABS report</a> and pinned <a href="https://drive.google.com/file/d/1zwmKrfwW9IN5ourLGFdfleJOCi7dcH2_/view">drawing source</a> identify the project, member footprints and some material/load data. Other R6.26 input properties—upper-floor continuation, member-end connectivity, slab-area nodal proxies—are documented independent assumptions, not extracted ETABS model facts.</p>
+ """),
+ ("difference","What separates this report from the original engineer's report?","""
+ <div class="table-scroll"><table><thead><tr><th>Original source report</th><th>Our independent R6.26/R6.27/R6.28</th></tr></thead><tbody>
+ <tr><td>Purpose, geometry, loading and member model assembled by source engineer</td><td>Ground-floor source positions plus assumed upper-level load paths</td></tr>
+ <tr><td>ETABS analysis and SAFE/Excel supplementary design methods</td><td>OpenSeesPy frame trial + separate synthetic shells + deterministic source arithmetic</td></tr>
+ <tr><td>Seismic force, drift, modal, foundation and detailed member design claims</td><td>Four elastic trial cases, signed member forces, reactions and bounded code arithmetic</td></tr>
+ <tr><td>Original Chapter 6 construction design schedule</td><td>No complete replacement reinforcement/foundation/slab/stair design yet</td></tr>
+ </tbody></table></div>
+ <p><a href="more.html#research">See the full seven-row Original versus Independent research comparison</a>. Continue with <a href="projects.html#purpose">Narayani Stage 01 Purpose</a> before building further physical models.</p>
+ """)
+]
+
 LEARNING_STYLE=r"""
 <style>
 :root{--l-ink:#282941;--l-sub:#5c6579;--l-border:#e1e2e9;--l-purple:#3e338f;--l-red:#be3f5a;--l-green:#137d75;--l-paper:#fbfaf7}
@@ -239,8 +269,7 @@ body{background:var(--l-paper)}
 
 def nav():
     pages=[("Home","index.html"),("Studio Standard","studio.html"),
-           ("Projects","projects.html"),("Developers","developers.html"),
-           ("Research","research.html"),("More","more.html")]
+           ("Projects","projects.html"),("More","more.html")]
     return '<header class="global-header"><div class="header-inner">'+(
       '<a class="brand" href="index.html"><span class="brand-mark">JP</span>'
       '<span class="brand-copy">STRUCTURAL<span> ANALYSIS</span><small>EDUCATION · SOURCE · ENGINE</small></span></a>'
@@ -333,33 +362,34 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
     ]
     cards=''.join('<div><b>'+a+'</b><small>'+b+' — '+c+'</small></div>' for a,b,c in flows)
     site_main=r"""JP Structural Analysis · GitHub Pages
-├── CURRENT NAVIGATION / six tabs
-│   ├── index.html              Home / what the engine is
-│   ├── studio.html             Reusable studio standard and guardrails
-│   ├── projects.html           Only Narayani is onboarded
-│   ├── developers.html         CI, QA, release/audit catalog
-│   ├── research.html           Experiments, completed/held research
-│   └── more.html               Legacy tools and preserved history
-├── LEARNING / start here
-│   ├── original-report-guide.html   Original ETABS report explained backwards
-│   └── system-map.html             This complete system map
-├── NARAYANI / independent results
-│   ├── r6p27-construction-review.html   Source dimensions, footing and rebar calculations
-│   ├── r6p26-report.html               6-chapter independent OpenSees trial report
-│   ├── r6p25.html                      Drawing-source and connection hypotheses
-│   └── reports/r6p26/ + reports/r6p27/ (reproducible JSON/CSV/receipts)
-├── FE RESEARCH / not this project's construction approval
-│   ├── r6p23.html                Synthetic model and mesh comparison
-│   └── Historical G15, diagrams and earlier experiment pages
-├── STANDARDS + CONTROL
+├── MAIN NAVIGATION / four sections
+│   ├── index.html                 Home: how Pages, Actions and source work
+│   ├── studio.html                Studio Standard: reusable requirements
+│   ├── projects.html              Narayani: Purpose → Inputs → Methods → Model → Response → Design
+│   └── more.html                  Resources, Research, Engines, Developers, Archive and Codes
+├── MORE / RESOURCES + REVERSE READING
+│   ├── original-report-guide.html    Source ETABS report explained backwards
+│   ├── independent-report-guide.html R6.26 independent report explained backwards
+│   └── system-map.html              Complete repo/Actions/Pages inventory
+├── MORE / RESEARCH + PREVIOUS WORK
+│   ├── r6p23.html                   Shell/diaphragm synthetic study
+│   ├── r6p25.html                   Connection hypotheses and source QA
+│   ├── r6p26-report.html            Independent OpenSees frame report
+│   ├── r6p27-construction-review.html Source footing/rebar crosswalk
+│   ├── data/narayani-f3-oneway-verification.v1.json
+│   └── reports/r6p26/ + reports/r6p27/ (versioned JSON/CSV)
+├── LEGACY URL COMPATIBILITY
+│   ├── developers.html → more.html#developers
+│   └── research.html → more.html#research
+├── STANDARDS / SOURCE CONTRACTS
 │   ├── standards/studio-standard-v1.md
 │   ├── standards/project-input-template-v1.json
 │   ├── portal-manifest.json + build-meta.json
-│   └── site-file-inventory.json (complete generated public path index)
-└── PRESERVED LEGACY / older design and tools
+│   └── site-file-inventory.json
+└── PRESERVED LEGACY
     ├── legacy-home.html + legacy-more.html
     ├── report.html + projects/index.html
-    └── project-lab.html, g15-3d.html and related historic outputs"""
+    └── historical G15/Gate tools and prior reports"""
     return [
       ("authority","Who owns what? The actual pipeline",
        '<div class="steps">'+cards+'</div><p><strong>Repository ≠ Actions ≠ Pages:</strong> GitHub repository holds source code and versioned tests; Actions are temporary execution runs of that code; Pages is the read-only published result. A successful run can verify it built correctly. It is not an engineering permit.</p>'),
@@ -368,7 +398,7 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
        +'<pre class="guide-tree">'+escape(site_main)+'</pre>'
        +'<p><a href="site-file-inventory.json">Open complete machine-readable list of every generated public file</a></p>'),
       ("all-pages","Complete published file inventory, generated from the current build",
-       '<p><b>'+str(len(site_files))+' public files</b> were present when this tree was generated; each is linked below. Expand a folder to see its exact paths. This includes preserved historic assets and machine-readable outputs, not just six new navigation pages.</p>'
+       '<p><b>'+str(len(site_files))+' public files</b> were present when this tree was generated; each is linked below. Expand a folder to see its exact paths. This includes preserved historic assets and machine-readable outputs, not just the four main navigation pages.</p>'
        +flat_groups(site_files,True)),
       ("actions-tree","All 14 GitHub Actions workflow definitions",
        '<p>Each YAML file defines a repeatable workflow. It can create numerous <em>runs</em>, so 14 files does <b>not</b> mean 14 analysis runs or pages. The list below is read directly from the <code>.github/workflows/</code> files in this checkout.</p>'
@@ -388,7 +418,7 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
       │   ├─ pinned R6.23/24 mesh study; R6.25 drawing QA
       │   ├─ independent R6.26 report + derived forces
       │   ├─ R6.27 drawing/reinforcement/footing design arithmetic
-      │   ├─ six-tab Portal + educational original-report/system pages
+      │   ├─ four-route Portal + original/independent reverse guides and system map
       │   └─ package the entire static site
       └─ DEPLOY job
           ├─ publish to fabingurung.github.io
@@ -421,13 +451,23 @@ def build(site:Path)->dict:
     # Portal's isolated browser QA builds only the six navigation pages and
     # downloads R6.26 JSON; the full Pages publishing job builds all reports.
     # Verify full source/report routes later in the production live CDN gate.
-    for name in ("index.html","studio.html","projects.html","developers.html","research.html","more.html"):
+    for name in ("index.html","studio.html","projects.html","more.html"):
         if not (site/name).is_file():raise ValueError("System map missing required published site source "+name)
     guide=site/"original-report-guide.html"
     guide.write_text(render(
         "Original structural report, explained backwards",
         "Narayani, Pokhara · What must the constructor receive, what computations produce it, and what the original ETABS report actually says in Chapters 6 → 1.",
         SECTIONS,SOURCES,"ORIGINAL REPORT · UNDERSTANDING BEFORE REDESIGN"),encoding="utf8")
+    independent=site/"independent-report-guide.html"
+    independent.write_text(render(
+        "Our independent structural-analysis report, explained backwards",
+        "Narayani R6.26 → R6.28: desired design → actual results → assumed model → solver methods → source inputs → differences.",
+        INDEPENDENT_SECTIONS,
+        [("Narayani manual project study","projects.html"),
+         ("Original structural report explained backwards","original-report-guide.html"),
+         ("R6.26 generated frame report","r6p26-report.html"),
+         ("R6.28 F3 code/worksheet JSON","data/narayani-f3-oneway-verification.v1.json")],
+        "OUR REPORT · REVERSE ENGINEERING / SOURCE-ASSUMED"),encoding="utf8")
     map_page=site/"system-map.html"
     # Create map placeholder for self-inclusion in site inventory
     map_page.write_text("<!doctype html><title>System map building</title>",encoding="utf8")
@@ -456,16 +496,22 @@ def build(site:Path)->dict:
          ("Source-controlled GitHub repository",REPO),
          ("Latest GitHub Actions runs",REPO+"/actions"),
          ("Published GitHub Pages",BASE),
-         ("Six-section Studio Standard","studio.html"),
+         ("Studio Standard","studio.html"),
          ("Source calculation review","r6p27-construction-review.html")],
         "STRUCTURAL SOFTWARE · BUILD AND PUBLISH TREE"),encoding="utf8")
     verify(site)
-    return {"guide":"original-report-guide.html","map":"system-map.html",
+    return {"guide":"original-report-guide.html","independent_guide":"independent-report-guide.html","map":"system-map.html",
             "files":index["count"],"workflows":len(workflows),
             "checksum":{x:sha(site/x) for x in ("original-report-guide.html","system-map.html","site-file-inventory.json")}}
 
 def verify(site:Path)->dict:
     src=(site/"original-report-guide.html").read_text(encoding="utf8")
+    own=(site/"independent-report-guide.html").read_text(encoding="utf8")
+    if own.count('class="guide-section"')!=len(INDEPENDENT_SECTIONS):
+        raise ValueError("Independent reverse explanation section-count drift")
+    if not all(x in own for x in ("OpenSeesPy","1,056","R6.26","R6.28","source-conditioned")):
+        raise ValueError("Independent report study lost numerical source/assumption boundaries")
+
     m=(site/"system-map.html").read_text(encoding="utf8")
     i=json.loads((site/"site-file-inventory.json").read_text())
     req=["36.915","0.9404","6,831.9109","894.9803","NOT SAFE IN ONE WAY SHEAR",
