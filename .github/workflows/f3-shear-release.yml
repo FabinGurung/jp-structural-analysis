@@ -1,0 +1,51 @@
+name: Freeze R6.28 F3 source verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'r6p27/f3_oneway_verification.py'
+      - 'r6p27/test_f3_oneway_verification.py'
+      - '.github/workflows/f3-shear-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  f3-freeze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Recalculate original PDF worksheet F3 and regression tests
+        run: |
+          python -m pip install pytest
+          python -m pytest -q r6p27/test_f3_oneway_verification.py
+          python -m r6p27.f3_oneway_verification --output build/f3-verification.json
+          python - <<'PY'
+          import json
+          d=json.load(open('build/f3-verification.json'))
+          assert d['source_one_way_verdict']=="NOT SAFE IN ONE WAY SHEAR"
+          assert d['original_f3_not_safe_preserved'] and not d['engineering_approval']
+          assert d['physical_footing_code_compliant'] is None
+          assert d['one_way_cases']['bottom_mesh_lower_bar_layer']['d_mm']==394
+          print("F3_RELEASE_HAS_NO_PHYSICAL_CONSTRUCTION_PERMISSION")
+          PY
+      - name: Create immutable software-only F3 milestone
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: r6.28-f3-source-verification
+        run: |
+          set -eu
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            EXISTING=$(gh release view "$TAG" --json targetCommitish --jq '.targetCommitish')
+            if [ "$EXISTING" != "$GITHUB_SHA" ]; then
+              echo "The immutable tag belongs to a different commit: $EXISTING"; exit 1
+            fi
+            echo "Already frozen at same commit"
+          else
+            gh release create "$TAG" build/f3-verification.json \
+              --target "$GITHUB_SHA" --title "R6.28 F3 source verification" \
+              --prerelease \
+              --notes "Original G+1.5 Narayani F3 worksheet, PDF page 61 and SHA256 provenance. Report q=194.22kPa reproduced; reported 172.3kN one-way shear differs from conditional calculations using physically derived 394/382mm depths (194.14/199.03kN). M20 Table19 minimum shear strength 0.28MPa disagrees with original printed 0.2. Worksheet NOT SAFE verdict retained, physical member approval and construction release FALSE. This is source/arithmetic/software verification, not a signed redesign."
+          fi
