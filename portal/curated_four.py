@@ -70,14 +70,33 @@ PAGES={
 },
 "projects":{
  "label":"Projects","title":"Narayani Parajuli — original report study",
- "eyebrow":"PROJECT PRJ-000007 / ONE PROJECT / MANUAL STUDY",
+ "eyebrow":"NARAYANI PARAJULI / ORIGINAL SOURCE STUDY",
  "deck":"Read the original Narayani structural report in six stages. Only titles and the source's scope are presented here; you decide each stage before we continue to independent analysis.",
  "status":"Current focus · Stage 01 Purpose",
  "sections":[
   ("purpose","01 — Purpose: which building is being designed?", """
-   <p><strong>Original revised report:</strong> G+1.5-storey residential reinforced-concrete building in Pokhara, Lekhnath. <a href="SOURCE_URL">Open Chapter 1 of the original PDF</a>.</p>
-   <div class="project-facts"><div><small>Check 1</small><b>Building use / occupancy</b></div><div><small>Check 2</small><b>Location and storeys</b></div><div><small>Check 3</small><b>Source revision</b></div><div><small>Check 4</small><b>Required result</b></div></div>
-   <p><strong>First manual decision:</strong> confirm that the residential G+1.5 revision is the building and purpose to study, rather than the older G+2.5 or mixed-use revision. No engine run is needed to read Stage 1.</p>
+   <p><strong>We begin with the original engineer's words—not OpenSees.</strong> In the revised source, the cover and Chapter 1 call this a <b>G+1.5-storey residential reinforced-concrete building</b> in Pokhara. Chapter 1 says the analysis/design report was prepared for an application for a construction permit; that does <em>not</em> establish that a permit was issued.</p>
+   <div class="inline-links"><a href="SOURCE_URL">Read the original revised PDF</a><a href="original-report-guide.html#ch1">Read Chapter 1 backwards-study reference</a><a href="more.html#research">Compare original and our independent platform</a></div>
+   <h3>What the original report actually records</h3>
+   <div class="table-scroll"><table><thead><tr><th>Topic</th><th>Reported statement or number</th><th>Where to verify in the PDF</th></tr></thead><tbody>
+   <tr><th>Intended use</th><td>Residential building, as identified on the report title and General Features table</td><td>Cover; Chapter 1 §1.1</td></tr>
+   <tr><th>Study / permit purpose</th><td>Structural analysis and design submitted as part of an application to construct the building</td><td>Chapter 1 §1.1, Executive Summary</td></tr>
+   <tr><th>Location</th><td>Pokhara; Leknath Metropolitan City is named in the source</td><td>Chapter 1 §1.1, General Features</td></tr>
+   <tr><th>Building description</th><td>G+1.5 storey, with floor-plan illustrations for ground, first and second floors</td><td>Cover; Chapter 1 §1.1; Chapter 2 §2.5</td></tr>
+   <tr><th>Vertical dimensions</th><td>3.048 m typical storey height; 9.144 m total building height</td><td>Chapter 1 §1.1, Architectural Features</td></tr>
+   <tr><th>Structural system</th><td>Special Moment Resisting Frame (SMRF), reinforced concrete</td><td>Chapter 1 §1.1–§1.3</td></tr>
+   <tr><th>Foundation families</th><td>Isolated pad, eccentric pad and combined footing</td><td>Chapter 1 §1.1, Structural Features</td></tr>
+   </tbody></table></div>
+   <h3>Different statements inside the same report</h3>
+   <div class="table-scroll"><table><thead><tr><th>Question</th><th>Source A</th><th>Source B</th><th>What we need to establish</th></tr></thead><tbody>
+   <tr><th>Residential or office?</th><td>Cover and Chapter 1: <b>Residential Building</b></td><td>Final Conclusion: <b>Office Building</b></td><td>Confirm intended use before selecting occupancy loads; do not quietly discard either source statement.</td></tr>
+   <tr><th>What does G+1.5 denote here?</th><td>Report identifies the project as G+1.5 storey</td><td>Reports 9.144 m total at 3.048 m per storey, and shows ground/first/second plans</td><td>Confirm actual occupied levels, half-storey/terrace use and governing drawings, rather than interpreting the title alone.</td></tr>
+   <tr><th>Where is the seismic site?</th><td>Project location: Pokhara/Leknath</td><td>Chapter 1 General Features also says 'Seismic Zone Kathmandu'; Chapter 2 associates Z = 0.35 with Leknath</td><td>Keep site and seismic parameters for Stage 02 Inputs; do not silently substitute a zone.</td></tr>
+   </tbody></table></div>
+   <h3>Stage 1 reading conclusion</h3>
+   <p><strong>Source description:</strong> G+1.5 residential RC framed building, Pokhara/Leknath, prepared for a construction permit application. <strong>Actual approved use, level definitions and governing revision:</strong> to be confirmed against the client's intended building and issued architectural/structural drawings.</p>
+   <div class="caution"><strong>Manual review point:</strong> does the project being studied match the residential G+1.5 building stated on the report cover and in Chapter 1? The 'Office Building' conclusion and seismic-site wording remain visible until reviewed. This page does not adopt a new structural model or mark an occupancy classification approved.</div>
+   <p>After reading Stage 1, continue to <a href="#inputs">02 — Inputs</a>. No independent numerical solver is needed to complete this source reading.</p>
   """.replace("SOURCE_URL",SOURCE)),
   ("inputs","02 — Inputs: what information is required?", """
    <div class="project-facts"><div><small>Geometry</small><b>Grids · levels · dimensions</b></div><div><small>Material</small><b>Concrete · reinforcing steel · cover</b></div><div><small>Ground</small><b>Soil / geotechnical data</b></div><div><small>Loads</small><b>Dead · live · seismic · wind</b></div><div><small>Codes</small><b>Applicable standards and editions</b></div><div><small>Provenance</small><b>Original drawings and report</b></div></div>
@@ -118,7 +137,7 @@ PAGES={
   ("research","02 — Research: original report versus our product", """
    <p>This table compares the <strong>revised G+1.5 ETABS report</strong> with the <strong>actual installed OpenSees and source-review capabilities</strong>. It distinguishes demonstrated output from missing physical-model equivalence.</p>
    <div class="table-scroll"><table><thead><tr><th>Stage</th><th>Original engineer's report</th><th>Our existing product</th><th>Difference to close</th></tr></thead><tbody>
-   <tr><th>01 Purpose</th><td>G+1.5 residential assignment, Pokhara</td><td>PRJ-000007 project identity and source revisions</td><td>Confirm governing building use and revision manually</td></tr>
+   <tr><th>01 Purpose</th><td>Cover and Chapter 1: G+1.5 residential in Pokhara/Leknath; conclusion: Office Building</td><td>Original-source facts indexed in Narayani Stage 1; no assumed new FE model</td><td>Confirm intended occupancy, level definitions and governing drawings before load assignment</td></tr>
    <tr><th>02 Inputs</th><td>Original plans, M20/Fe500, soil, occupancy, loads and seismic parameters</td><td>Source-DXF 23 GF columns, 21 footing outlines, selected report/soil parameters; partial load ledger</td><td>Exact slab, walls, occupancy mass and material/source assumptions not fully reconciled</td></tr>
    <tr><th>03 Methods</th><td>ETABS v20 space-frame analysis, ETABS 21 detailed member examples, SAFE foundation and Excel slab/stair</td><td>OpenSeesPy linear elastic frame, separate experimental shell/frame engine and simple source-based RC arithmetic</td><td>No independent complete ETABS/SAFE/worksheet-equivalent design sequence yet</td></tr>
    <tr><th>04 Model</th><td>3D frame, shell and wall-load visuals; source describes ETABS/SAFE</td><td>R6.26 actual GF source locations extended with assumed upper levels and nearest-joint connections; R6.23 synthetic shells</td><td>Original full physical joints, slabs, diaphragm, openings and wall paths unproven</td></tr>
