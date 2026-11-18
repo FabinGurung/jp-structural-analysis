@@ -1,4 +1,4 @@
-"""Real Chrome UI smoke for six-page portal at phone and desktop viewports."""
+"""Real Chrome UI smoke for four-page portal at phone and desktop viewports."""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +9,7 @@ from threading import Thread
 
 from playwright.sync_api import sync_playwright
 
-ROUTES=("index.html","studio.html","projects.html","developers.html","research.html","more.html")
+ROUTES=("index.html","studio.html","projects.html","more.html")
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self,*args):pass
 
@@ -31,7 +31,7 @@ def run(site:Path,output:Path):
                     response=page.goto(base+route,wait_until="networkidle")
                     assert response is not None and response.status==200,(route,response)
                     assert page.locator("#page-main").count()==1,route
-                    assert page.locator("#primary-nav a").count()==6,route
+                    assert page.locator("#primary-nav a").count()==4,route
                     assert page.locator(".top-toc a").count()>=4,route
                     assert page.locator(".left-toc a").count()>=4,route
                     assert page.locator(".right-pane").count()==1,route
@@ -59,23 +59,26 @@ def run(site:Path,output:Path):
                     else:
                         assert page.locator("#primary-nav").is_visible(),(route,name)
                     if route=="studio.html":
-                        assert "Copy prompt" in page.locator(".copy-prompt").inner_text()
-                        assert "Do not copy Narayani" in page.locator("#handover-text").inner_text()
+                        assert "Studio Standard" in page.locator("h1").inner_text() or "reusable standard" in page.locator("h1").inner_text()
                     if route=="projects.html":
-                        assert page.locator('a[href="r6p26-report.html"]').count()>=1
-                        assert "NOT SAFE" in page.locator("#actual-vs-assumed").inner_text()
-                    if route=="research.html":
-                        assert "NOT SAFE" in page.locator("#open-debt").inner_text()
+                        assert "Narayani" in page.locator("h1").inner_text()
+                        assert page.locator('#purpose').count()==1
+                        assert page.locator('#design').count()==1
+                        assert page.locator('a[href="r6p26-report.html"]').count()==0
+                    if route=="more.html":
+                        assert page.locator("#research").count()==1
+                        assert "Original" in page.locator("#research").inner_text()
+                        assert "OpenSeesPy" in page.locator("#research").inner_text()
                 # Explicit learning pages: same real browser, source-bound facts,
                 # complete tree readability, sticky/upper TOC and mobile menu.
-                for route in ("original-report-guide.html","system-map.html"):
+                for route in ("original-report-guide.html","independent-report-guide.html","system-map.html"):
                     resp=page.goto(base+route,wait_until="networkidle")
                     assert resp is not None and resp.status==200,(route,resp)
                     expected=13 if route=="original-report-guide.html" else 7
                     assert page.locator(".guide-section").count()==expected,(route,name)
                     assert page.locator(".guide-topnav a").count()==expected,(route,name)
                     assert page.locator(".guide-right").count()==1,(route,name)
-                    assert page.locator("#primary-nav a").count()==6,(route,name)
+                    assert page.locator("#primary-nav a").count()==4,(route,name)
                     for link in page.locator(".guide-topnav a").all():
                         href=link.get_attribute("href")
                         assert href and page.locator(href).count()==1,(route,href)
@@ -86,6 +89,9 @@ def run(site:Path,output:Path):
                             assert token in page.locator("#guide-main").inner_text(),token
                         assert page.locator('a[href="#worked-foundation"]').count()>=1
                         assert page.locator('a[href="r6p27-construction-review.html"]').count()>=1
+                    elif route=="independent-report-guide.html":
+                        assert "1,056" in page.locator("#guide-main").inner_text()
+                        assert "OpenSeesPy" in page.locator("#guide-main").inner_text()
                     else:
                         assert page.locator('a[href="site-file-inventory.json"]').count()>=1
                         for wf in ("pages.yml","portal-v1-qa.yml",
@@ -111,12 +117,12 @@ def run(site:Path,output:Path):
                         page.screenshot(path=str(target),full_page=False)
                         assert target.stat().st_size>10000,(target,target.stat().st_size)
                 for route in (("index.html","studio.html","projects.html") if name=="phone" else
-                              ("index.html","developers.html","research.html")):
+                              ("index.html","more.html")):
                     page.goto(base+route,wait_until="networkidle")
                     target=output/(name+"-"+route.replace(".html","")+".png")
                     page.screenshot(path=str(target),full_page=True)
                     assert target.stat().st_size>25000,(target,target.stat().st_size)
-                print("JP_PORTAL_V1_"+name.upper()+"_ALL_6_PAGES_RESPONSIVE_QA_PASS")
+                print("JP_PORTAL_V1_"+name.upper()+"_ALL_4_PAGES_RESPONSIVE_QA_PASS")
                 page.close()
             b.close()
     finally:
