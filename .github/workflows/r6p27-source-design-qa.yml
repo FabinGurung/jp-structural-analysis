@@ -43,6 +43,16 @@ jobs:
           R6P27_SITE: build/site
         run: |
           python -m pytest -q r6p27/test_source_design.py
+      - name: Independently verify original F3 one-way shear worksheet and preserve adverse verdict
+        run: |
+          python -m pytest -q r6p27/test_f3_oneway_verification.py
+          python -m r6p27.f3_oneway_verification --output build/site/data/narayani-f3-oneway-verification.v1.json
+          python - <<'PY'
+          import json
+          d=json.load(open("build/site/data/narayani-f3-oneway-verification.v1.json"))
+          assert d["original_f3_not_safe_preserved"] and not d["engineering_approval"]
+          assert d["physical_footing_code_compliant"] is None
+          PY
       - name: Write exact reported-source column steel ratio, G1 concrete delta and trial support mapping
         run: |
           python - <<'PY'
