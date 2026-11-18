@@ -138,7 +138,7 @@ PAGES={
    <tr><th>Portal</th><td><a href="REPO/tree/main/portal">Site build, studies and browser QA</a></td><td>Presentation, NOT a structural solver</td></tr>
    </tbody></table></div>
    <p><strong>Count:</strong> three principal computational code families, with numerous research workflows and three supporting source/publishing modules. This is not three complete building-design engines.</p>
-  """.replaceAll("REPO",REPO)),
+  """.replace("REPO",REPO)),
   ("experiments","04 — Engineering research and calculation history", """
    <div class="card-grid">
    <article class="mini-card"><h3><a href="r6p23.html">Shell, diaphragm and mesh research</a></h3><p>Source-bounded synthetic shell/frame model cases.</p></article>
@@ -151,12 +151,12 @@ PAGES={
    <p>Development material is <strong>here under More</strong>, not a separate primary section.</p>
    <div class="inline-links"><a href="system-map.html">Full repository / Pages / Actions inventory</a><a href="REPO/actions">Current Actions runs</a><a href="REPO/tree/main/portal">Portal source code</a><a href="REPO/tree/main/.github/workflows">Workflow definitions</a></div>
    <details><summary>What each workflow does</summary><p>Calculation and QA routines produce versioned reports, JSON and numerical receipts. Pages publication builds static site files and checks them after deployment. A successful website deployment alone does not approve the physical building.</p></details>
-  """.replaceAll("REPO",REPO)),
+  """.replace("REPO",REPO)),
   ("archives","06 — Releases and preserved historical pages", """
    <p>Nothing from previous computational milestones has been deleted by this navigation change. Older viewer/report URLs remain accessible here.</p>
    <div class="inline-links"><a href="legacy-home.html">Historical Home</a><a href="legacy-more.html">Historical More</a><a href="report.html">Original chaptered report viewer</a><a href="projects/index.html">Earlier project viewer</a><a href="REPO/releases">All release tags</a><a href="REPO/releases/tag/r6.28-f3-source-verification">Frozen F3 R6.28 milestone</a></div>
    <p>Former top-level Developers and Research links point into the corresponding sections on this page.</p>
-  """.replaceAll("REPO",REPO)),
+  """.replace("REPO",REPO)),
   ("codes","07 — Source and design reference library", """
    <div class="table-scroll"><table><thead><tr><th>Reference</th><th>Where it fits</th></tr></thead><tbody>
    <tr><th><a href="SOURCE_URL">Original revised structural report</a></th><td>Project-specific Chapters 1–6 and original engineering findings</td></tr>
