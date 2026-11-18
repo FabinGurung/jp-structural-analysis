@@ -26,7 +26,7 @@ BASE="https://fabingurung.github.io/jp-structural-analysis/"
 VERSION="2026-11-17"
 WORKFLOW_ROLES={
  "pages.yml":("PUBLICATION", "Canonical build → site generation → Pages upload → deployment → live source/HTML/JSON verification"),
- "portal-v1-qa.yml":("WEBSITE QA", "Test six-tab navigation, accessibility/layout, 390/768/1440px Chromium and source receipts"),
+ "portal-v1-qa.yml":("WEBSITE QA", "Test four-route navigation, accessibility/layout, 390/768/1440px Chromium and source receipts"),
  "f3-shear-release.yml":("SOURCE VERIFICATION RELEASE", "Freeze independent original F3 worksheet reconstruction and strictly non-approved one-way shear comparison"),
  "r6p27-source-design-qa.yml":("PROJECT ENGINEERING INPUT QA", "Pin real Narayani drawing source, regenerate OpenSees, map 21 footings to 23 columns and verify sourced quantities/code-area screens"),
  "r6p26-report-qa.yml":("PROJECT FE QA", "Recalculate source-conditioned Narayani signed FE actions; verify equilibrium and 390px report UI"),
@@ -362,33 +362,34 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
     ]
     cards=''.join('<div><b>'+a+'</b><small>'+b+' — '+c+'</small></div>' for a,b,c in flows)
     site_main=r"""JP Structural Analysis · GitHub Pages
-├── CURRENT NAVIGATION / six tabs
-│   ├── index.html              Home / what the engine is
-│   ├── studio.html             Reusable studio standard and guardrails
-│   ├── projects.html           Only Narayani is onboarded
-│   ├── developers.html         CI, QA, release/audit catalog
-│   ├── research.html           Experiments, completed/held research
-│   └── more.html               Legacy tools and preserved history
-├── LEARNING / start here
-│   ├── original-report-guide.html   Original ETABS report explained backwards
-│   └── system-map.html             This complete system map
-├── NARAYANI / independent results
-│   ├── r6p27-construction-review.html   Source dimensions, footing and rebar calculations
-│   ├── r6p26-report.html               6-chapter independent OpenSees trial report
-│   ├── r6p25.html                      Drawing-source and connection hypotheses
-│   └── reports/r6p26/ + reports/r6p27/ (reproducible JSON/CSV/receipts)
-├── FE RESEARCH / not this project's construction approval
-│   ├── r6p23.html                Synthetic model and mesh comparison
-│   └── Historical G15, diagrams and earlier experiment pages
-├── STANDARDS + CONTROL
+├── MAIN NAVIGATION / four sections
+│   ├── index.html                 Home: how Pages, Actions and source work
+│   ├── studio.html                Studio Standard: reusable requirements
+│   ├── projects.html              Narayani: Purpose → Inputs → Methods → Model → Response → Design
+│   └── more.html                  Resources, Research, Engines, Developers, Archive and Codes
+├── MORE / RESOURCES + REVERSE READING
+│   ├── original-report-guide.html    Source ETABS report explained backwards
+│   ├── independent-report-guide.html R6.26 independent report explained backwards
+│   └── system-map.html              Complete repo/Actions/Pages inventory
+├── MORE / RESEARCH + PREVIOUS WORK
+│   ├── r6p23.html                   Shell/diaphragm synthetic study
+│   ├── r6p25.html                   Connection hypotheses and source QA
+│   ├── r6p26-report.html            Independent OpenSees frame report
+│   ├── r6p27-construction-review.html Source footing/rebar crosswalk
+│   ├── data/narayani-f3-oneway-verification.v1.json
+│   └── reports/r6p26/ + reports/r6p27/ (versioned JSON/CSV)
+├── LEGACY URL COMPATIBILITY
+│   ├── developers.html → more.html#developers
+│   └── research.html → more.html#research
+├── STANDARDS / SOURCE CONTRACTS
 │   ├── standards/studio-standard-v1.md
 │   ├── standards/project-input-template-v1.json
 │   ├── portal-manifest.json + build-meta.json
-│   └── site-file-inventory.json (complete generated public path index)
-└── PRESERVED LEGACY / older design and tools
+│   └── site-file-inventory.json
+└── PRESERVED LEGACY
     ├── legacy-home.html + legacy-more.html
     ├── report.html + projects/index.html
-    └── project-lab.html, g15-3d.html and related historic outputs"""
+    └── historical G15/Gate tools and prior reports"""
     return [
       ("authority","Who owns what? The actual pipeline",
        '<div class="steps">'+cards+'</div><p><strong>Repository ≠ Actions ≠ Pages:</strong> GitHub repository holds source code and versioned tests; Actions are temporary execution runs of that code; Pages is the read-only published result. A successful run can verify it built correctly. It is not an engineering permit.</p>'),
@@ -397,7 +398,7 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
        +'<pre class="guide-tree">'+escape(site_main)+'</pre>'
        +'<p><a href="site-file-inventory.json">Open complete machine-readable list of every generated public file</a></p>'),
       ("all-pages","Complete published file inventory, generated from the current build",
-       '<p><b>'+str(len(site_files))+' public files</b> were present when this tree was generated; each is linked below. Expand a folder to see its exact paths. This includes preserved historic assets and machine-readable outputs, not just six new navigation pages.</p>'
+       '<p><b>'+str(len(site_files))+' public files</b> were present when this tree was generated; each is linked below. Expand a folder to see its exact paths. This includes preserved historic assets and machine-readable outputs, not just the four main navigation pages.</p>'
        +flat_groups(site_files,True)),
       ("actions-tree","All 14 GitHub Actions workflow definitions",
        '<p>Each YAML file defines a repeatable workflow. It can create numerous <em>runs</em>, so 14 files does <b>not</b> mean 14 analysis runs or pages. The list below is read directly from the <code>.github/workflows/</code> files in this checkout.</p>'
@@ -417,7 +418,7 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
       │   ├─ pinned R6.23/24 mesh study; R6.25 drawing QA
       │   ├─ independent R6.26 report + derived forces
       │   ├─ R6.27 drawing/reinforcement/footing design arithmetic
-      │   ├─ six-tab Portal + educational original-report/system pages
+      │   ├─ four-route Portal + original/independent reverse guides and system map
       │   └─ package the entire static site
       └─ DEPLOY job
           ├─ publish to fabingurung.github.io
@@ -495,7 +496,7 @@ def build(site:Path)->dict:
          ("Source-controlled GitHub repository",REPO),
          ("Latest GitHub Actions runs",REPO+"/actions"),
          ("Published GitHub Pages",BASE),
-         ("Six-section Studio Standard","studio.html"),
+         ("Studio Standard","studio.html"),
          ("Source calculation review","r6p27-construction-review.html")],
         "STRUCTURAL SOFTWARE · BUILD AND PUBLISH TREE"),encoding="utf8")
     verify(site)
