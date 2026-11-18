@@ -65,6 +65,11 @@ def run(site:Path,output:Path):
                         assert page.locator('#purpose').count()==1
                         assert page.locator('#design').count()==1
                         assert page.locator('a[href="r6p26-report.html"]').count()==0
+                        stage=page.locator("#purpose").inner_text()
+                        assert "Office Building" in stage and "Residential" in stage
+                        assert "3.048 m" in stage and "9.144 m" in stage
+                        assert "application" in stage
+                        assert page.locator('#purpose a[href^="https://drive.google.com/file/d/"]').count()==1
                     if route=="more.html":
                         assert page.locator("#research").count()==1
                         assert "Original" in page.locator("#research").inner_text()
