@@ -187,6 +187,36 @@ SOURCES=[
  ("System map and complete file trees","system-map.html")
 ]
 
+INDEPENDENT_SECTIONS=[
+ ("goal","What the final structural report should deliver","""
+ <p>Read our independent report <strong>backwards</strong>, starting with the actual building results you want: full footing, column, beam, slab and staircase designs, reinforcement and details. Our R6.26 report is a source-conditioned analysis study, not that complete final design. <a href="projects.html#design">See Narayani Stage 06</a>.</p>
+ """),
+ ("design","What design outputs does our current engine actually provide?","""
+ <p>Our current independent solver does <em>not</em> independently design and approve every foundation, beam-column joint, slab, staircase or bar schedule. The <a href="r6p27-construction-review.html">R6.27 drawing-source crosswalk</a> separately performs footing quantities and steel-area arithmetic. The <a href="data/narayani-f3-oneway-verification.v1.json">R6.28 F3 worksheet verifier</a> compares published calculations under stated assumptions; neither is a complete design engine.</p>
+ """),
+ ("response","What did R6.26 independently calculate?","""
+ <p>It ran four linear elastic frame cases <strong>DL, LL, PX10 and PY10</strong> on a source-conditioned 132-member representation, storing 1,056 signed member-end records and 92 support-reaction records. The published report includes displacement and force tables and equilibrium checks. These are <em>trial-case actions</em>, not the original ETABS ULS/SLS seismic envelope or physical member capacities. <a href="r6p26-report.html">Open generated report</a>.</p>
+ """),
+ ("model","Which structural model produced those forces?","""
+ <p><a href="r6p25.html">Source-derived ground-floor columns and segments</a> were extended to assumed upper storeys. Candidate beam endpoints were mapped to nearby column joints. The 3D connectivity is a declared modelling hypothesis. A visible connection in the viewer does not establish the original engineer's ETABS joint, slab shell, opening or diaphragm.</p>
+ """),
+ ("method","What computational method was used?","""
+ <p>R6.26 uses <strong>OpenSeesPy elastic 3D frame calculations</strong> with source-conditioned geometry and declared load proxies. Tests check signed member/end actions, reaction equilibrium and reproducible JSON. Our separate <a href="r6p23.html">R6.23 ShellMITC4 research</a> studies shell/diaphragm behaviour on bounded cases; it is not silently joined to the R6.26 project as the original physical floor system.</p>
+ """),
+ ("inputs","Where did the independent model's inputs come from?","""
+ <p>The original revised <a href="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view">ETABS report</a> and pinned <a href="https://drive.google.com/file/d/1zwmKrfwW9IN5ourLGFdfleJOCi7dcH2_/view">drawing source</a> identify the project, member footprints and some material/load data. Other R6.26 input properties—upper-floor continuation, member-end connectivity, slab-area nodal proxies—are documented independent assumptions, not extracted ETABS model facts.</p>
+ """),
+ ("difference","What separates this report from the original engineer's report?","""
+ <div class="table-scroll"><table><thead><tr><th>Original source report</th><th>Our independent R6.26/R6.27/R6.28</th></tr></thead><tbody>
+ <tr><td>Purpose, geometry, loading and member model assembled by source engineer</td><td>Ground-floor source positions plus assumed upper-level load paths</td></tr>
+ <tr><td>ETABS analysis and SAFE/Excel supplementary design methods</td><td>OpenSeesPy frame trial + separate synthetic shells + deterministic source arithmetic</td></tr>
+ <tr><td>Seismic force, drift, modal, foundation and detailed member design claims</td><td>Four elastic trial cases, signed member forces, reactions and bounded code arithmetic</td></tr>
+ <tr><td>Original Chapter 6 construction design schedule</td><td>No complete replacement reinforcement/foundation/slab/stair design yet</td></tr>
+ </tbody></table></div>
+ <p><a href="more.html#research">See the full seven-row Original versus Independent research comparison</a>. Continue with <a href="projects.html#purpose">Narayani Stage 01 Purpose</a> before building further physical models.</p>
+ """)
+]
+
 LEARNING_STYLE=r"""
 <style>
 :root{--l-ink:#282941;--l-sub:#5c6579;--l-border:#e1e2e9;--l-purple:#3e338f;--l-red:#be3f5a;--l-green:#137d75;--l-paper:#fbfaf7}
@@ -239,8 +269,7 @@ body{background:var(--l-paper)}
 
 def nav():
     pages=[("Home","index.html"),("Studio Standard","studio.html"),
-           ("Projects","projects.html"),("Developers","developers.html"),
-           ("Research","research.html"),("More","more.html")]
+           ("Projects","projects.html"),("More","more.html")]
     return '<header class="global-header"><div class="header-inner">'+(
       '<a class="brand" href="index.html"><span class="brand-mark">JP</span>'
       '<span class="brand-copy">STRUCTURAL<span> ANALYSIS</span><small>EDUCATION · SOURCE · ENGINE</small></span></a>'
@@ -421,13 +450,23 @@ def build(site:Path)->dict:
     # Portal's isolated browser QA builds only the six navigation pages and
     # downloads R6.26 JSON; the full Pages publishing job builds all reports.
     # Verify full source/report routes later in the production live CDN gate.
-    for name in ("index.html","studio.html","projects.html","developers.html","research.html","more.html"):
+    for name in ("index.html","studio.html","projects.html","more.html"):
         if not (site/name).is_file():raise ValueError("System map missing required published site source "+name)
     guide=site/"original-report-guide.html"
     guide.write_text(render(
         "Original structural report, explained backwards",
         "Narayani, Pokhara · What must the constructor receive, what computations produce it, and what the original ETABS report actually says in Chapters 6 → 1.",
         SECTIONS,SOURCES,"ORIGINAL REPORT · UNDERSTANDING BEFORE REDESIGN"),encoding="utf8")
+    independent=site/"independent-report-guide.html"
+    independent.write_text(render(
+        "Our independent structural-analysis report, explained backwards",
+        "Narayani R6.26 → R6.28: desired design → actual results → assumed model → solver methods → source inputs → differences.",
+        INDEPENDENT_SECTIONS,
+        [("Narayani manual project study","projects.html"),
+         ("Original structural report explained backwards","original-report-guide.html"),
+         ("R6.26 generated frame report","r6p26-report.html"),
+         ("R6.28 F3 code/worksheet JSON","data/narayani-f3-oneway-verification.v1.json")],
+        "OUR REPORT · REVERSE ENGINEERING / SOURCE-ASSUMED"),encoding="utf8")
     map_page=site/"system-map.html"
     # Create map placeholder for self-inclusion in site inventory
     map_page.write_text("<!doctype html><title>System map building</title>",encoding="utf8")
@@ -460,12 +499,18 @@ def build(site:Path)->dict:
          ("Source calculation review","r6p27-construction-review.html")],
         "STRUCTURAL SOFTWARE · BUILD AND PUBLISH TREE"),encoding="utf8")
     verify(site)
-    return {"guide":"original-report-guide.html","map":"system-map.html",
+    return {"guide":"original-report-guide.html","independent_guide":"independent-report-guide.html","map":"system-map.html",
             "files":index["count"],"workflows":len(workflows),
             "checksum":{x:sha(site/x) for x in ("original-report-guide.html","system-map.html","site-file-inventory.json")}}
 
 def verify(site:Path)->dict:
     src=(site/"original-report-guide.html").read_text(encoding="utf8")
+    own=(site/"independent-report-guide.html").read_text(encoding="utf8")
+    if own.count('class="guide-section"')!=len(INDEPENDENT_SECTIONS):
+        raise ValueError("Independent reverse explanation section-count drift")
+    if not all(x in own for x in ("OpenSeesPy","1,056","R6.26","R6.28","source-conditioned")):
+        raise ValueError("Independent report study lost numerical source/assumption boundaries")
+
     m=(site/"system-map.html").read_text(encoding="utf8")
     i=json.loads((site/"site-file-inventory.json").read_text())
     req=["36.915","0.9404","6,831.9109","894.9803","NOT SAFE IN ONE WAY SHEAR",
