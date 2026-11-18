@@ -1,4 +1,4 @@
-name: Portal V1 six-section responsive site QA
+name: Portal V2 four-section source-first site QA
 
 on:
   pull_request:
@@ -28,7 +28,7 @@ jobs:
         run: |
           python -m pip install 'pytest>=8,<9' playwright==1.56.0
           python -m playwright install --with-deps chromium
-      - name: Static six-tab information architecture, governance and source hold tests
+      - name: Static four-route information architecture, governance and source hold tests
         run: |
           python -m pytest -q portal/test_portal.py
           node --check portal/site-system.js
@@ -74,6 +74,6 @@ jobs:
       - name: Retain reviewed navigation QA screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: JP-Structural-Portal-V1-Responsive-QA-Not-Design-Approved
+          name: JP-Structural-Portal-V2-Responsive-QA-Not-Design-Approved
           path: build/portal-ui-qa/
           if-no-files-found: error
