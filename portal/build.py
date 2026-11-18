@@ -161,7 +161,7 @@ def page_card(current,metrics):
  </div>
 </div>
 <footer class="global-footer"><div class="footer-inner"><div><strong>JP Structural Analysis</strong><p>First-party OpenSees engine · Pokhara source project · Research and design HOLD where unresolved.</p></div>
- <div><a href="studio.html#governance">Source governance</a><a href="more.html#developers">Developer QA</a><a href="more.html#library">Historical library</a></div>
+ <div><a href="studio.html#standard-purpose">Source governance</a><a href="more.html#developers">Developer QA</a><a href="more.html#archives">Historical library</a></div>
  <span>© 2026 · R6.28 source verification · {VERSION}</span></div></footer></body></html>'''
 
 def build(site:Path)->dict:
