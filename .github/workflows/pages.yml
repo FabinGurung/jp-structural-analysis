@@ -966,7 +966,7 @@ jobs:
                   i=json.loads(read(names[2],attempt))
                   assert m["original_report_explainer"]["educational_only"] is True
                   assert m["original_report_explainer"]["reading_order"]=="6→5→4→3→2→1"
-                  assert m["system_file_tree"]["action_workflow_definitions"]==13
+                  assert m["system_file_tree"]["action_workflow_definitions"]==14
                   assert m["system_file_tree"]["public_files_in_inventory"]==i["count"]
                   for name,data in zip(names,(g,x,read(names[2],attempt))):
                       assert hashlib.sha256(data).hexdigest()==m["files_sha256"][name],name
@@ -981,7 +981,7 @@ jobs:
                       assert expected in x.decode(),expected
                   assert b"<nav" in g and b'guide-left' in g and b'guide-right' in g
                   print("LIVE_ORIGINAL_REPORT_BACKWARDS_GUIDE_FULL_REPOSITORY_PAGES_ACTIONS_TREE_SHA256_PASS",
-                        i["count"],"files and 13 workflow definitions")
+                        i["count"],"files and 14 workflow definitions")
                   break
               except Exception as exc:
                   if attempt==17:raise
