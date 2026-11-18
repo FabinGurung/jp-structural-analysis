@@ -27,6 +27,7 @@ VERSION="2026-11-17"
 WORKFLOW_ROLES={
  "pages.yml":("PUBLICATION", "Canonical build → site generation → Pages upload → deployment → live source/HTML/JSON verification"),
  "portal-v1-qa.yml":("WEBSITE QA", "Test six-tab navigation, accessibility/layout, 390/768/1440px Chromium and source receipts"),
+ "f3-shear-release.yml":("SOURCE VERIFICATION RELEASE", "Freeze independent original F3 worksheet reconstruction and strictly non-approved one-way shear comparison"),
  "r6p27-source-design-qa.yml":("PROJECT ENGINEERING INPUT QA", "Pin real Narayani drawing source, regenerate OpenSees, map 21 footings to 23 columns and verify sourced quantities/code-area screens"),
  "r6p26-report-qa.yml":("PROJECT FE QA", "Recalculate source-conditioned Narayani signed FE actions; verify equilibrium and 390px report UI"),
  "r6p25-narayani-intake.yml":("SOURCE QA", "Check exact drawing snapshot, columns, footings, provenance and assumptions"),
@@ -326,7 +327,7 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
       ("1. SOURCE AUTHORITY","Original human documents and engineer decisions","Google Drive, project-specific register, soil and previous SAR"),
       ("2. GEOMETRY AUTHORITY","Original drawings / original member IDs","jp-drawing-coordination; pinned SHA, DXF handles, building levels"),
       ("3. ANALYSIS CODE","OpenSees engine and bounded source assumptions","jp-structural-analysis/r6p23–r6p27, portal/"),
-      ("4. TEST AUTOMATION","Recalculate, check invariants, build and deploy","13 versioned .github/workflows/*.yml jobs"),
+      ("4. TEST AUTOMATION","Recalculate, check invariants, build and deploy","14 versioned .github/workflows/*.yml jobs"),
       ("5. PUBLIC PRESENTATION","What you are reading in a browser","GitHub Pages HTML + JS + structured JSON/CSV"),
       ("6. APPROVAL","Professional engineering accept/revise decision","Licensed review and signed working drawings, not GitHub status")
     ]
@@ -369,8 +370,8 @@ def source_map_blocks(repo_files:list[str],site_files:list[str]):
       ("all-pages","Complete published file inventory, generated from the current build",
        '<p><b>'+str(len(site_files))+' public files</b> were present when this tree was generated; each is linked below. Expand a folder to see its exact paths. This includes preserved historic assets and machine-readable outputs, not just six new navigation pages.</p>'
        +flat_groups(site_files,True)),
-      ("actions-tree","All 13 GitHub Actions workflow definitions",
-       '<p>Each YAML file defines a repeatable workflow. It can create numerous <em>runs</em>, so 13 files does <b>not</b> mean 13 analysis runs or pages. The list below is read directly from the <code>.github/workflows/</code> files in this checkout.</p>'
+      ("actions-tree","All 14 GitHub Actions workflow definitions",
+       '<p>Each YAML file defines a repeatable workflow. It can create numerous <em>runs</em>, so 14 files does <b>not</b> mean 14 analysis runs or pages. The list below is read directly from the <code>.github/workflows/</code> files in this checkout.</p>'
        +'<div class="table-scroll"><table><thead><tr><th>Workflow file</th><th>Category</th><th>What it executes or verifies</th></tr></thead><tbody>'
        +''.join('<tr><th><a href="'+REPO+'/blob/main/.github/workflows/'+quote(n)+'">'+escape(n)+'</a></th><td>'+escape(WORKFLOW_ROLES.get(n,("OTHER",""))[0])+'</td><td>'+escape(WORKFLOW_ROLES.get(n,("OTHER","Repository workflow"))[1])+'</td></tr>'
                 for n in sorted(n for n in repo_files if n.startswith(".github/workflows/") and n.endswith(".yml"))

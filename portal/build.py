@@ -238,11 +238,11 @@ def verify(site:Path)->dict:
     require(len(m["navigation"])==6 and all(q["toc_count"]>=4 for q in m["navigation"]),
             "six-page top and left nav incomplete")
     study=verify_study_and_system_pages(site)
-    require(study["workflows"]==13 and study["guide_sections"]>=12,
+    require(study["workflows"]==14 and study["guide_sections"]>=12,
             "original report/source code teaching system failed")
     require(m.get("original_report_explainer",{}).get("educational_only") is True,
             "original report guide cannot be a construction design approval")
-    require(m.get("system_file_tree",{}).get("action_workflow_definitions")==13,
+    require(m.get("system_file_tree",{}).get("action_workflow_definitions")==14,
             "current GitHub Actions inventory absent")
     for f,digest in m["files_sha256"].items():
         require((site/f).is_file() and sha(site/f)==digest,

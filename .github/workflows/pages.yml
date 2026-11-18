@@ -848,6 +848,18 @@ jobs:
           PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import publish; print("R6P27_REAL_SOURCE_CROSSWALK",publish(Path("r6p25-cad-source"),Path("site"))["source_original_DXF_sha"])'
           PYTHONPATH=r6p23-main python -c 'from pathlib import Path; from r6p27.source_design import verify; print("R6P27_ACTUAL_DRAWING_AND_ACTION_RECONCILIATION_VERIFIED",verify(Path("site"))["actual_DXF_dim_concrete_m3"])'
           test -f site/r6p27-construction-review.html
+      - name: Publish independently verified original F3 worksheet arithmetic (no design approval)
+        run: |
+          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/r6p27/test_f3_oneway_verification.py
+          PYTHONPATH=r6p23-main python -m r6p27.f3_oneway_verification --output site/data/narayani-f3-oneway-verification.v1.json
+          python - <<'PY'
+          import json
+          d=json.load(open('site/data/narayani-f3-oneway-verification.v1.json'))
+          assert d["source_one_way_verdict"]=="NOT SAFE IN ONE WAY SHEAR"
+          assert not d["engineering_approval"] and not d["construction_release"]
+          assert d["physical_footing_code_compliant"] is None
+          print("F3_DOCUMENTED_DISCREPANCY_NOT_A_STRUCTURAL_ACCEPTANCE")
+          PY
       - name: Apply six-section Studio / Projects / Developers / Research portal without deleting legacy sources
         run: |
           PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_portal.py
@@ -954,7 +966,7 @@ jobs:
                   i=json.loads(read(names[2],attempt))
                   assert m["original_report_explainer"]["educational_only"] is True
                   assert m["original_report_explainer"]["reading_order"]=="6→5→4→3→2→1"
-                  assert m["system_file_tree"]["action_workflow_definitions"]==13
+                  assert m["system_file_tree"]["action_workflow_definitions"]==14
                   assert m["system_file_tree"]["public_files_in_inventory"]==i["count"]
                   for name,data in zip(names,(g,x,read(names[2],attempt))):
                       assert hashlib.sha256(data).hexdigest()==m["files_sha256"][name],name
@@ -969,7 +981,7 @@ jobs:
                       assert expected in x.decode(),expected
                   assert b"<nav" in g and b'guide-left' in g and b'guide-right' in g
                   print("LIVE_ORIGINAL_REPORT_BACKWARDS_GUIDE_FULL_REPOSITORY_PAGES_ACTIONS_TREE_SHA256_PASS",
-                        i["count"],"files and 13 workflow definitions")
+                        i["count"],"files and 14 workflow definitions")
                   break
               except Exception as exc:
                   if attempt==17:raise
