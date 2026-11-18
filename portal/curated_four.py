@@ -145,7 +145,7 @@ PAGES={
    <article class="mini-card"><h3><a href="r6p25.html">Assumed connection review</a></h3><p>Source marks, hypothesized beam-column links and QA.</p></article>
    <article class="mini-card"><h3><a href="r6p26-report.html">R6.26 signed 3D frame report</a></h3><p>Original-source-conditioned calculations and reported limitations.</p></article>
    <article class="mini-card"><h3><a href="r6p27-construction-review.html">R6.27 drawing source takeoff</a></h3><p>Footing dimensions, columns and reinforcement arithmetic.</p></article>
-   <article class="mini-card"><h3><a href="data/narayani-f3-oneway-verification.v1.json">R6.28 F3 one-way shear verification JSON</a></h3><p>Original p.61 source facts, recalculated demand and IS456 comparison; original verdict retained.</p></article></div>
+   <article class="mini-card"><h3><a href="data/narayani-f3-oneway-verification.v1.json">R6.28 F3 one-way shear verification JSON</a></h3><p>Original p.61 source facts, recalculated demand and IS456 comparison; original verdict NOT SAFE IN ONE WAY SHEAR retained.</p></article></div>
   """),
   ("developers","05 — Developer reference and workflow map", """
    <p>Development material is <strong>here under More</strong>, not a separate primary section.</p>
