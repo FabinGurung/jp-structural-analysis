@@ -131,3 +131,21 @@ def test_guide_preserves_visually_verified_f3_and_teaches_c4_code_scope():
     assert "0.9404%" in chapter6 and "1.0%" in chapter6
     assert "applicability of §4.2" in chapter6
     assert "approved redesign" in chapter6
+
+
+def test_narayani_stage01_has_original_report_facts_and_visible_contradictions(site):
+    build(site)
+    project=(site/"projects.html").read_text(encoding="utf8")
+    part=project.split('id="purpose"',1)[1].split('id="inputs"',1)[0]
+    assert "G+1.5" in part and "Residential" in part
+    assert "Office Building" in part
+    assert "Pokhara" in part and "Leknath" in part
+    assert "3.048 m" in part and "9.144 m" in part
+    assert "Seismic Zone Kathmandu" in part
+    assert "construction permit" in part
+    assert "review point" in part.lower()
+    assert "application" in part
+    assert 'href="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"' in part
+    assert "r6p26-report.html" not in part
+    assert "actual approved" in part.lower()
+    assert (site/"more.html").read_text().count("Office Building")>=1
