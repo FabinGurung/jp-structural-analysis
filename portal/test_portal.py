@@ -101,6 +101,8 @@ def test_source_safety_hold_and_release_not_misclassified(site):
     assert "NOT SAFE IN ONE WAY SHEAR" in research
     assert "engineer" in research.lower()
     assert "independent-report-guide.html" in research
+    assert "engine-explained.html" in research
+    assert "example-sar-report.html" in research
     m=json.loads((site/"portal-manifest.json").read_text())
     assert m["frozen_engine_software_sha"]=="1d6394d1d871b070d17f056b6eec4c74efdfb3af"
     assert m["historical_F3_one_way_shear_safe"] is False
