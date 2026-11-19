@@ -71,6 +71,8 @@ def run(site:Path,output:Path):
                         assert "application" in stage
                         assert page.locator('#purpose a[href^="https://drive.google.com/file/d/"]').count()==1
                     if route=="more.html":
+                        assert page.locator('a[href="engine-explained.html"]').count()>=1
+                        assert page.locator('a[href="example-sar-report.html"]').count()>=1
                         assert page.locator("#research").count()==1
                         assert "Original" in page.locator("#research").inner_text()
                         assert "OpenSeesPy" in page.locator("#research").inner_text()
