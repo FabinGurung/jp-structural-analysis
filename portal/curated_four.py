@@ -119,7 +119,7 @@ PAGES={
    <p>Original PDF: <a href="SOURCE_URL">Chapter 6 — Design of Structural Elements</a>. Reverse reading guides and old independent results live in <a href="more.html#resources">More → Resources</a>, not here.</p>
   """.replace("SOURCE_URL",SOURCE))],
  "right":{"title":"Original source","status":"STEP 01 · PURPOSE",
-  "groups":[("Read before calculating",[("Original revised ETABS PDF",SOURCE),("Reverse reading reference","original-report-guide.html")]),("Manual study route",[("Start with purpose","#purpose"),("Next: inputs","#inputs"),("Study all six headings","projects.html")])],
+  "groups":[("Read before calculating",[("Original revised ETABS PDF",SOURCE),("Reverse reading reference","original-report-guide.html")]),("Separate worked example",[("Assumed OpenSees report","example-sar-report.html"),("Engines explained","engine-explained.html")]),("Manual study route",[("Start with purpose","#purpose"),("Next: inputs","#inputs"),("Study all six headings","projects.html")])],
   "note":"This is a manual learning page, not a recreated report, automatic engineering checklist or source revision approval."}
 },
 "more":{
