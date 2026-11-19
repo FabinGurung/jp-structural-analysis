@@ -209,7 +209,7 @@ strong.metric{font-size:25px;color:#3a338e}.stats{display:grid;grid-template-col
 .ok{border-left:4px solid #26796b;padding:13px 15px;background:#f2faf8;margin:16px 0}
 code{color:#43378e;overflow-wrap:anywhere}pre{overflow-x:auto;background:#f4f5fb;padding:14px}
 .footer{padding:20px;color:#647080;text-align:center}@media(max-width:850px){.frame{grid-template-columns:1fr}.toc{position:static}.hero{padding:24px}section{padding:18px}}
-@media print{body{background:white;font-size:11px}.mast,.toc,.footer,.noprint{display:none!important}main{max-width:none;margin:0;padding:0}.frame{display:block}section{border:none;break-before:page;padding:0 0 10px;border-radius:0}.hero{border:0;break-after:page}.scroll{overflow:visible}table{font-size:9px;min-width:0}.wire{page-break-inside:avoid}a{color:black;text-decoration:none}}
+@page{size:A4;margin:16mm 14mm}@media print{body{background:white;font-size:11px}.mast,.footer,.noprint{display:none!important}main{max-width:none;margin:0;padding:0}.frame{display:block}.toc{display:block;position:static;border:none;padding:0;break-after:page;page-break-after:always}.toc a{font-size:12px;padding:8px 0}section{border:none;break-before:page;padding:0 0 10px;border-radius:0}.hero{border:0;break-after:page}.scroll{overflow:visible}table{font-size:9px;min-width:0}.wire{page-break-inside:avoid}a{color:black;text-decoration:none}}
 </style>"""
 
 def shell(title,subtitle,sections,nav):
@@ -225,7 +225,7 @@ def shell(title,subtitle,sections,nav):
 <main><header class="hero"><span class="eyebrow">ENGINE AUDIT · WORKED EXAMPLE · NOVEMBER 2026</span>
 <h1>{e(title)}</h1><p class="lead">{e(subtitle)}</p>
 <div class="noprint"><button onclick="window.print()" type="button">Print / Save as PDF</button></div></header>
-<div class="frame"><aside class="toc" aria-label="On this page"><strong>CONTENTS</strong>{toc}</aside><div>{body}</div></div></main>
+<div class="frame"><aside class="toc" aria-label="On this page"><strong>TABLE OF CONTENTS</strong>{toc}</aside><div>{body}</div></div></main>
 <div class="footer">JP Structural Analysis · Source-indexed learning and reproducible numerical demonstrations</div></body></html>"""
 
 def simple_table(headers,rows):
