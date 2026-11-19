@@ -13,7 +13,7 @@ PAGES={
  "sections":[
   ("welcome","What is this GitHub Pages website?", """
    <p>GitHub Pages is the public <strong>website</strong> for viewing project stages, reports, code explanations and research. It is not ETABS, OpenSees, a database, or a structural solver by itself. Calculations run in repository code and GitHub Actions; Pages displays the published output.</p>
-   <div class="feature-panel"><div><h3>Start with the building, not the software</h3><p>For Narayani, read the original engineer's purpose, inputs, method, model, response and required design in order. The source-first project page is for manual learning; historical experimental engines are indexed under More.</p><div class="inline-links"><a href="projects.html#purpose">Open Narayani · Stage 1</a><a href="more.html#resources">Original report, explained backwards</a></div></div></div>
+   <div class="feature-panel"><div><h3>Start with the building, not the software</h3><p>For Narayani, read the original engineer's purpose, inputs, method, model, response and required design in order. The source-first project page is for manual learning; historical experimental engines are indexed under More.</p><div class="inline-links"><a href="example-sar-report.html">Open a real-solved assumed six-chapter report</a><a href="engine-explained.html">What each engine actually does</a><a href="projects.html#purpose">Narayani · Stage 1</a></div></div></div>
   """),
   ("four-areas","Our four main sections", """
    <div class="card-grid"><article class="mini-card"><h3><a href="index.html">Home</a></h3><p>Website purpose, system boundaries and navigation.</p></article><article class="mini-card"><h3><a href="studio.html">Studio Standard</a></h3><p>Repeatable rules every future structural project should follow.</p></article><article class="mini-card"><h3><a href="projects.html">Projects</a></h3><p>Only project-specific study and structural analysis work.</p></article><article class="mini-card"><h3><a href="more.html">More</a></h3><p>Resources, research comparisons, engines, developers, archives and codes.</p></article></div>
@@ -135,7 +135,7 @@ PAGES={
    <article class="mini-card"><span>BUILD AND SYSTEM</span><h3><a href="system-map.html">Complete GitHub Pages / Actions / repository map</a></h3><p>Every tracked file, published page and workflow in a collapsible tree.</p></article></div>
   """),
   ("research","02 — Research: original report versus our product", """
-   <p>This table compares the <strong>revised G+1.5 ETABS report</strong> with the <strong>actual installed OpenSees and source-review capabilities</strong>. It distinguishes demonstrated output from missing physical-model equivalence.</p>
+   <p><a href="engine-explained.html"><strong>Open the exact engine inventory and line-by-line capability audit</strong></a> · <a href="example-sar-report.html"><strong>Open the solved example six-chapter report</strong></a></p><p>This table compares the <strong>revised G+1.5 ETABS report</strong> with the <strong>actual installed OpenSees and source-review capabilities</strong>. It distinguishes demonstrated output from missing physical-model equivalence.</p>
    <div class="table-scroll"><table><thead><tr><th>Stage</th><th>Original engineer's report</th><th>Our existing product</th><th>Difference to close</th></tr></thead><tbody>
    <tr><th>01 Purpose</th><td>Cover and Chapter 1: G+1.5 residential in Pokhara/Leknath; conclusion: Office Building</td><td>Original-source facts indexed in Narayani Stage 1; no assumed new FE model</td><td>Confirm intended occupancy, level definitions and governing drawings before load assignment</td></tr>
    <tr><th>02 Inputs</th><td>Original plans, M20/Fe500, soil, occupancy, loads and seismic parameters</td><td>Source-DXF 23 GF columns, 21 footing outlines, selected report/soil parameters; partial load ledger</td><td>Exact slab, walls, occupancy mass and material/source assumptions not fully reconciled</td></tr>
@@ -148,7 +148,7 @@ PAGES={
    <p>Source: <a href="SOURCE_URL">Original PDF</a> · <a href="r6p26-report.html">Independent FE report</a> · <a href="r6p27-construction-review.html">Drawing arithmetic</a>.</p>
   """.replace("SOURCE_URL",SOURCE)),
   ("engines","03 — Engines and modules: what actually exists?", """
-   <div class="table-scroll"><table><thead><tr><th>Software family</th><th>Concrete implementation</th><th>Role</th></tr></thead><tbody>
+   <p><a href="engine-explained.html">Technical inventory: actual files, code, numeric output, boundaries and reproduction</a> · <a href="example-sar-report.html">Worked assumption-based OpenSees example</a></p><div class="table-scroll"><table><thead><tr><th>Software family</th><th>Concrete implementation</th><th>Role</th></tr></thead><tbody>
    <tr><th>Governed original engine</th><td>Existing pinned OpenSees SAR core and R5/R6 example scripts</td><td>Computational framework, benchmarks, report and experiment workflows; not a separate engine per Action</td></tr>
    <tr><th>R6.23</th><td><a href="REPO/tree/main/r6p23">Multi-floor ShellMITC4 frame/shell FE</a></td><td>Bounded research solver</td></tr>
    <tr><th>R6.26</th><td><a href="REPO/tree/main/r6p26">Narayani source-conditioned elastic 3D frame</a></td><td>Independent trial frame solver and report generator</td></tr>
@@ -156,11 +156,11 @@ PAGES={
    <tr><th>R6.27 / 28</th><td><a href="REPO/tree/main/r6p27">Footing/cage arithmetic and F3 worksheet verifier</a></td><td>Deterministic source checks, NOT an independent FE solver</td></tr>
    <tr><th>Portal</th><td><a href="REPO/tree/main/portal">Site build, studies and browser QA</a></td><td>Presentation, NOT a structural solver</td></tr>
    </tbody></table></div>
-   <p><strong>Count:</strong> three principal computational code families, with numerous research workflows and three supporting source/publishing modules. This is not three complete building-design engines.</p>
+   <p><strong>Count:</strong> two independently implemented OpenSees numerical modules in current main (R6.23 and R6.26), plus the pinned historic governed SAR core. R6.24/25/27/28 are numerical-comparison, source-intake and calculation-check modules, not additional general-purpose FE engines.</p>
   """.replace("REPO",REPO)),
   ("experiments","04 — Engineering research and calculation history", """
    <div class="card-grid">
-   <article class="mini-card"><h3><a href="r6p23.html">Shell, diaphragm and mesh research</a></h3><p>Source-bounded synthetic shell/frame model cases.</p></article>
+   <article class="mini-card"><h3><a href="example-sar-report.html">Complete assumed demonstration report</a></h3><p>Original six-chapter layout, source-checked actual OpenSees forces, plus explicitly assumed sample beam/slab/footing calculations.</p></article><article class="mini-card"><h3><a href="engine-explained.html">All engines explained</a></h3><p>File-by-file computational scope and original-report parity table.</p></article><article class="mini-card"><h3><a href="r6p23.html">Shell, diaphragm and mesh research</a></h3><p>Source-bounded synthetic shell/frame model cases.</p></article>
    <article class="mini-card"><h3><a href="r6p25.html">Assumed connection review</a></h3><p>Source marks, hypothesized beam-column links and QA.</p></article>
    <article class="mini-card"><h3><a href="r6p26-report.html">R6.26 signed 3D frame report</a></h3><p>Original-source-conditioned calculations and reported limitations.</p></article>
    <article class="mini-card"><h3><a href="r6p27-construction-review.html">R6.27 drawing source takeoff</a></h3><p>Footing dimensions, columns and reinforcement arithmetic.</p></article>
