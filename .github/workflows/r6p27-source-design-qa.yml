@@ -53,6 +53,9 @@ jobs:
           assert d["original_f3_not_safe_preserved"] and not d["engineering_approval"]
           assert d["physical_footing_code_compliant"] is None
           PY
+      - name: Independently solve R6.23 synthetic frame shell and verify six-chapter engine report generator
+        run: |
+          python -m pytest -q portal/test_engine_atlas.py
       - name: Write exact reported-source column steel ratio, G1 concrete delta and trial support mapping
         run: |
           python - <<'PY'

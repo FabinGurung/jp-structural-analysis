@@ -860,6 +860,10 @@ jobs:
           assert d["physical_footing_code_compliant"] is None
           print("F3_DOCUMENTED_DISCREPANCY_NOT_A_STRUCTURAL_ACCEPTANCE")
           PY
+      - name: Reproduce real FE example report from R6.23 source and verify its design arithmetic
+        run: |
+          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_engine_atlas.py
+          test -f site/data/r6p23-preview.json
       - name: Apply four-section Home / Studio / Projects / More portal without deleting historical outputs
         run: |
           PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_portal.py
@@ -871,6 +875,10 @@ jobs:
           test -f site/r6p26-report.html
           test -f site/report.html
           test -f site/projects/index.html
+          test -f site/engine-explained.html
+          test -f site/example-sar-report.html
+          test -f site/reports/example-sar/example-sar-numbers.json
+          test -f site/reports/example-sar/receipt.json
           test -f site/original-report-guide.html
           test -f site/independent-report-guide.html
           test -f site/system-map.html
@@ -1036,6 +1044,50 @@ jobs:
               except Exception as err:
                   if attempt==17:raise
                   print("Waiting for portal CDN revision",attempt+1,str(err)[:220])
+                  time.sleep(10)
+          PY
+      - name: Verify live R6.30 actual OpenSees example, original chapter format and full engine inventory
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,time,urllib.request
+          owner,repo=os.environ["GITHUB_REPOSITORY"].split("/")
+          root="https://"+owner.lower()+".github.io/"+repo+"/"
+          def get(path,attempt):
+              request=urllib.request.Request(root+path+"?r630="+str(attempt),
+                headers={"User-Agent":"JP-SAR-R6P30-Real-FE-Report-QA","Cache-Control":"no-cache"})
+              return urllib.request.urlopen(request,timeout=30).read()
+          for n in range(18):
+              try:
+                  manifest=json.loads(get("portal-manifest.json",n))
+                  assert manifest["solved_example_report"]["present"] is True
+                  assert manifest["solved_example_report"]["engineering_approval"] is False
+                  receipt=json.loads(get("reports/example-sar/receipt.json",n))
+                  result_raw=get("reports/example-sar/example-sar-numbers.json",n)
+                  result=json.loads(result_raw)
+                  original=json.loads(get("data/r6p23-preview.json",n))
+                  assert result["source_fixture_sha256"]==original["source_SHA256"]
+                  assert result["loads_kN"]["DL"]==339 and result["loads_kN"]["LL"]==62
+                  assert result["topology"]["shell_elements"]==31
+                  assert result["FE_results"]["max_six_axis_equilibrium_residual"]<1e-3
+                  assert result["FE_is_really_computed"] is True
+                  assert result["original_f3_not_safe_retained"] is True
+                  assert result["professional_approval"] is False
+                  assert result["construction_release"] is False
+                  for file,sha in receipt["files_sha256"].items():
+                      assert hashlib.sha256(get(file,n)).hexdigest()==sha,file
+                  rep=get("example-sar-report.html",n).decode()
+                  atlas=get("engine-explained.html",n).decode()
+                  assert all(str(i)+".0 " in rep for i in range(1,7))
+                  assert "339.000" in rep and "62.000" in rep
+                  assert "R6.23" in atlas and "R6.28" in atlas
+                  assert "What our structural engines actually do" in atlas
+                  assert 'href="engine-explained.html"' in get("more.html",n).decode()
+                  assert 'href="example-sar-report.html"' in get("more.html",n).decode()
+                  print("R6P30_GENUINE_OPENSEES_SIX_CHAPTER_REPORT_AND_ENGINE_PARITY_SITE_PASS")
+                  break
+              except Exception as exc:
+                  if n==17:raise
+                  print("Waiting for sample report CDN",n+1,str(exc)[:180])
                   time.sleep(10)
           PY
       - name: Verify live R6.26 independent calculation report and no false project acceptance
