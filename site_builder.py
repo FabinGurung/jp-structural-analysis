@@ -16,6 +16,8 @@ from r6p23.runner import reference_fixture
 from r6p30.beam_design import member_checks_from_preview
 from r6p30.column_pmm import column_checks_from_preview
 from r6p30.column_validation import compute as column_benchmark
+from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
+F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
 ORIGINAL_REPORT="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -90,7 +92,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification):
+def report(spec,solved,beam,col,verification,f3):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -101,6 +103,24 @@ def report(spec,solved,beam,col,verification):
     gov=col["governing_example"]
     cv=gov["PMM"]
     external=verification["external_sp16_nptel_reference"]
+    twenty=verification["external_sp16_nptel_twenty_bar_reference"]
+    revised=f3["preferred_uniform_revision_550mm"]
+    original_f3=f3["original_report_adopted_uniform_trial_450mm"]
+    f3_table=table(("Condition","Original adopted depth","Proposed uniform-thickness trial"),[
+      ("Plan geometry","2.10 × 2.10 m","2.10 × 2.10 m; confirm site"),
+      ("Structural depth","450 mm adopted, sloped drawing","550 mm uniform, NEW proposal"),
+      ("Concentric one-way shear stress",
+         n(original_f3["oneway_tau_v_MPa"])+" MPa",
+         n(revised["oneway_tau_v_MPa"])+" MPa"),
+      ("Conservative source screening limit","0.200 MPa","0.200 MPa"),
+      ("Concentric punching shear",
+         n(original_f3["punching_tau_MPa"])+" MPa",
+         n(revised["punching_tau_MPa"])+" MPa"),
+      ("Soil gross static pressure","Original design still needs reconciling",
+         n(revised["gross_service_concentric_soil_pressure_kPa"])+" kPa ≤ 160 kPa"),
+      ("Original verdict","NOT SAFE IN ONE WAY SHEAR","Historical failure preserved"),
+      ("Revised status","Not a valid approved redesign",
+         "Conditional concentric screens pass; not approved for construction")])
     external_table=table(("Capacity or check","NPTEL SP16 chart-derived value","Our independently calculated value","Difference"),[
       ("Long-axis uniaxial moment",
         n(external["reference_major_M_kNm"])+" kN·m",
@@ -213,7 +233,9 @@ def report(spec,solved,beam,col,verification):
         'design for Narayani. The original F3 one-way shear result remains NOT SAFE.</div>'
         '<h3>6.2.1 Independent numerical verification</h3>'
         '<p>IS456:2000 Clause 39.1(a) uniform compression imposes ε=0.002. '
-        'For the assumed Fe500 steel, Es×ε=400 MPa, below 0.87fy=435 MPa. '
+        'For Fe500 the revised SP16 Table A stress at ε=0.002 is '
+        +n(verification["steel_stress_at_uniform_epsilon_0002_MPa"])+' MPa, '
+        'not the former bilinear 400 MPa estimate. '
         'Our <strong>closed-form uniform axial force</strong> is '
         +n(verification["closed_form_P_at_uniform_epsilon_0002_kN"])+' kN; '
         'independent numerical integration gives '
@@ -247,17 +269,42 @@ def report(spec,solved,beam,col,verification):
         'interaction is not an exact floating-point source for verification. '
         'The live hypothetical building above still uses its original 400 × 400 mm '
         '8-bar assumptions; the NPTEL benchmark is separate.</p>'
-        '<div class="note">One published worked example is an independent '
-        'cross-check, not a complete validation of SP16 Charts 44–45, other '
-        'steel grades, column layout assumptions, biaxial interaction surfaces, '
-        'earthquake design or Narayani project safety. Source status: '
-        '<strong>provisionally benchmarked; SP16 chart-suite verification remains open</strong>.</div>'
+        '<div class="note">External NPTEL chart-derived comparison is independent; '
+        'it is NOT a certified chart-suite or whole-building approval. '
+        'The fuller 13-published-value audit and 720-point *internal numerical* '
+        'mesh refinement research are in Drive; the latter are NOT 720 independent '
+        'SP16 chart comparisons. Formal SP16 chart verification remains open.</div>'
+        '<p><strong>Additional independent Fe415 benchmark:</strong> '
+        'NPTEL Lesson 25, 400 × 400 mm and 20Ø16, Pu 2,240 kN: '
+        'chart-derived Mu='+n(twenty["published_Mu_kNm"])+' kN·m; '
+        'our Table A based result='+n(twenty["our_table_A_Mu_kNm"])+' kN·m '
+        '(difference '+n(100*twenty["relative_difference"])+'%). '
+        +A(twenty["source_url"],'Read NPTEL 20-bar reference')+'. '
+        +A(F3_ARCHIVE,'Open the full external reference matrix in Drive')+'.</p>'
         +A('data/column-verification.json','Inspect both reference and independent numerical evidence')+'.'
 
-        '<h3>6.3 Additional original-report elements</h3><p>Slab reinforcement, isolated '
-        'and combined footings, and stair reinforcement are outside the current production '
-        'design modules. Their past exploratory outputs are stored in the Drive archive '
-        'and are deliberately not republished as live project designs.</p>'),
+        '<h3>6.3 Narayani F3 — proposed foundation redesign study</h3>'
+        '<p>The original structural report page 61 explicitly records F3 '
+        '<strong>NOT SAFE IN ONE WAY SHEAR</strong>. The engineering study '
+        'does not alter those original drawings or the safety history. '
+        'Under the worksheet 571 kN concentric axial assumption only, '
+        'the NEW 2.10m square uniform-thickness 550mm footing passes '
+        'the listed shear, punching, bending and concentric bearing screens. '
+        'It is NOT a field-approved design, and it does not justify '
+        'constructing without full governing moments and seismic loads.</p>'
+        +f3_table+
+        '<div class="note"><strong>HOLD FOR ENGINEERING APPROVAL.</strong> '
+        'The site-specific foundation actions N/Mx/My/Vx/Vy, '
+        'source 2.1m versus G1 1.8m geometry, original sloped cross-section, '
+        'eccentric soil bearing and settlement, bar anchorage, dowels '
+        'and independent structural review remain unresolved. '
+        'The earlier failed footing is NOT retroactively marked safe.</div>'
+        +A('data/f3-trial.json','Open source-traceable trial calculation (JSON)')+' · '
+        +A(F3_PDF,'Full eight-page F3 and SP16 research report in Drive')+'.'
+        '<h3>6.4 Other original-report elements</h3><p>Actual-project slab reinforcement, '
+        'combined footing and staircase design remain incomplete. '
+        'The historical research is preserved in the Drive archive '
+        'rather than published as approved project designs.</p>'),
     ]
     toc='<nav class="toc"><b>TABLE OF CONTENTS</b>'+''.join(
       f'<a href="#{key}">{e(label)}</a>' for key,label,_ in chapters)+'</nav>'
@@ -276,6 +323,9 @@ def build(out:Path=Path("site")):
     data=out/"data";data.mkdir(exist_ok=True)
     spec,solved,beam,col=read_actual_solver()
     verification=column_benchmark()
+    f3=f3_study()
+    (data/"f3-trial.json").write_text(json.dumps(f3,indent=2,
+        sort_keys=True,allow_nan=False)+"\n")
     (data/"column-verification.json").write_text(json.dumps(verification,indent=2,
         sort_keys=True,allow_nan=False)+"\n")
     # Preserve the signed independent numerical evidence, but not every
@@ -288,6 +338,7 @@ def build(out:Path=Path("site")):
       "topology":{"shells":31,"beams":32,"columns":8},
       "beam_checks":beam,"column_pmm_checks":col,
       "column_capacity_verification":verification,
+      "f3_proposed_concentric_redesign_study":f3,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -349,7 +400,10 @@ def build(out:Path=Path("site")):
           f' · {A(ORIGINAL_DRAWING,"Original structural drawing")}'
           f' · {A(ORIGINAL_SOIL,"Geotechnical source")}</p>'
           '<div class="note">A solved hypothetical reference report is available separately; '
-          'it is not Narayani design approval. Original F3 one-way shear remains NOT SAFE.</div>')+
+          'it is not Narayani design approval. Original F3 is still NOT SAFE; '
+          'a new uniform 550mm trial passes its limited concentric checks '
+          'but awaits actual load, site geometry and engineering approval. '
+          +A(F3_PDF,"Read the proposed F3 revision and SP16 audit in Drive")+'.</div>')+
        box("Working demonstration",f'<p>{A("report.html","Open full six-chapter structural example")}. '
            'Beam and column design calculations are linked to signed OpenSees results.</p>'))
     more=page("Resources and archived research","Everything historical is stored in Google Drive; the active site stays uncluttered.",
@@ -358,12 +412,20 @@ def build(out:Path=Path("site")):
           '<p>Original source repository, full Git history bundle, source checksum manifest, '
           'previous published website, responsive screenshots and source-design QA. '
           'These experimental files are not in the active website.</p></div>')+
+       box("Current verification and F3 redesign study",
+          f'<p>{A(F3_PDF,"R6.35 engineer-review PDF — F3 footing and expanded SP16 verification")} '
+          f' · {A(F3_ARCHIVE,"Original calculations and full 720-case study in Drive")}</p>'
+          '<p>The 550mm uniform F3 option is only a conditional proposal; '
+          'the original F3 failure remains in the historic record. '
+          'The expanded SP16 work compares 13 published reference values and '
+          '720 internal mesh checks, but is not formal full-chart certification.</p>')+
        box("Original sources",
          f'<p>{A(ORIGINAL_REPORT,"Revised original structural PDF")}'
          f' · {A(ORIGINAL_DRAWING,"Structural drawings")} '
          f' · {A(ORIGINAL_SOIL,"Soil study")} '
          f' · {A(CODE_IS456,"IS 456:2000 with amendments")}'
-         f' · {A("https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l26.pdf","NPTEL SP16 column example")}</p>')+
+         f' · {A("https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l26.pdf","NPTEL SP16 column example")}'
+         f' · {A("https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l23.pdf","SP16 Table A stress-strain reference")}</p>')+
        box("Active calculations",
          f'<p>{A("report.html","Working six-chapter report")} · '
          f'{A("data/report-results.json","Reproducible current calculations")}'
@@ -372,7 +434,7 @@ def build(out:Path=Path("site")):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification)}
+           "report.html":report(spec,solved,beam,col,verification,f3)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
@@ -397,6 +459,11 @@ def verify(out:Path):
     assert "NOT SAFE" in (out/"projects.html").read_text()
     result=json.loads((out/"data/report-results.json").read_text())
     assert result["original_narayani_F3_NOT_SAFE"]
+    assert result["f3_proposed_concentric_redesign_study"]["historical_not_safe_preserved"]
+    assert result["f3_proposed_concentric_redesign_study"]["preferred_uniform_revision_550mm"]["listed_concentric_checks_pass"]
+    assert not result["f3_proposed_concentric_redesign_study"]["approved_for_construction"]
+    assert result["column_capacity_verification"]["external_sp16_nptel_twenty_bar_reference"]["relative_difference"]<.03
+    assert not result["column_capacity_verification"]["full_SP16_chart_verification"]
     assert result["column_capacity_verification"]["relative_pure_axial_error"]<.001
     assert result["column_capacity_verification"]["sp16_verified"] is False
     assert result["column_pmm_checks"]["axial_tension_rows_excluded"]>=0
