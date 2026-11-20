@@ -52,6 +52,28 @@ def test_genuine_solved_synthetic_report_and_engine_inventory(tmp_path):
     atlas=(site/"engine-explained.html").read_text()
     assert "R6.23" in atlas and "R6.28" in atlas
     assert "Original engineer" in atlas
+    beam=nums["beam_rc_screens_R6p31"]
+    assert beam["beam_count"]==32
+    assert beam["rows_count"]==256
+    assert len(beam["all_qualifying_beam_end_case_rows"])==256
+    assert set(beam["modes"])=={"FLEXIBLE_SHELL","RIGID_INPLANE_MPC"}
+    assert beam["source_fixture_sha256"]==nums["source_fixture_sha256"]
+    assert beam["combination_factors"]["U_PLUS"]=={"DL":1.2,"LL":1.5,"HX":1.0}
+    assert beam["combination_factors"]["U_MINUS"]=={"DL":1.2,"LL":1.5,"HX":-1.0}
+    assert beam["governing_bending_row"]["flexure"]["Mu_abs_kNm"]>0
+    assert beam["governing_vertical_shear_row"]["shear"]["Vu_abs_kN"]>0
+    assert not beam["member_design_complete"]
+    assert not beam["professional_engineering_approval"]
+    assert not beam["construction_release"]
+    assert beam["original_narayani_F3_NOT_SAFE_retained"]
+    assert "6.1 Reusable beam flexure and vertical shear" in html
+    assert "256 actual OpenSees beam-end combinations" in html
+    assert "reports/example-sar/beam-end-checks.csv" in html
+    csv=(site/"reports/example-sar/beam-end-checks.csv").read_text()
+    assert len(csv.splitlines())==257
+    assert "My_kNm" in csv.splitlines()[0] and "Vz_kN" in csv.splitlines()[0]
+    assert "T_kNm" in csv.splitlines()[0]
+
 
 def test_rectangular_RC_formula_closed_form_example():
     result=flexural_steel(16.8,1000,96)
