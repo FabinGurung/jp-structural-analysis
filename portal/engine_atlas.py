@@ -379,6 +379,9 @@ def inventory_report(d):
       ("R6.28 — F3 shear verifier",repo("r6p27/f3_oneway_verification.py"),
        "Original worksheet pressure reproduced; shear effective-depth and IS456 stress comparisons independently recalculated; machine-verifiable release",
        "Does not physically approve source F3 footing; original NOT SAFE verdict retained"),
+      ("R6.31 — synthetic beam design checks",repo("r6p30/beam_design.py")+" + "+repo("r6p30/report_beam_html.py"),
+       "Actual source-hashed R6.23 two-mode OpenSees signed member-end My/Vz pairs → 256 reusable IS456 beam flexure+vertical-shear section checks, assumed steel and 256-row CSV",
+       "No beam-end-to-support-face design action reduction, torsion, Mz/Vy, NBC seismic/IS13920 ductile/joint/detailing; not a Narayani structural design"),
       ("Portal/UI",repo("portal/build.py")+" + "+repo("portal/learning_system.py"),
        "Four-section public website; both backwards-reading guides, indexed original-versus-our-product comparison, reports and SHA provenance",
        "Not a structural solver, and a website QA pass does not prove design safety")])
@@ -388,7 +391,7 @@ def inventory_report(d):
       ("3.0 Analysis / design procedure","ETABS frame modelling, response-spectrum method, SAFE and spreadsheet checks","OpenSees linear elastic frame and ShellMITC4, conditional combinations, explicit reproducibility","Validated response-spectrum/seismic design, wind, P–Δ and member/foundation design algorithms"),
       ("4.0 Modeling","3D ETABS frame, floor layouts, assignments and actual connection assumptions","R6.23 regular synthetic shared-node shells; R6.26 actual GF coords + assumed upper storeys / beam joints","Construct verified physical model of irregular building, real walls, diaphragm and boundary restraints"),
       ("5.0 Structural output","Base shear, mass participation, displacement, drift, torsion/soft-storey, member-end forces","Actual signed OpenSees forces and base reactions, 6-axis balance; diaphragm comparisons in synthetic example","Verified site-specific modal/seismic/ULS/SLS outputs and direct source action comparison"),
-      ("6.0 Element design","Columns, beam reinforcement, slabs, isolated+combined footings, staircase and schedules","Drawing quantity/steel arithmetic; F3 shear review; a bounded hypothetical beam/slab/footing teaching example","Reusable, tested code-compliant beam/column/slab/foundation/stair checks and signed schedules"),
+      ("6.0 Element design","Columns, beam reinforcement, slabs, isolated+combined footings, staircase and schedules","New R6.31 reusable IS456 beam My/Vz flexure/shear screens for all 256 signed synthetic FE end cases; R6.27 quantities, R6.28 F3 review; other example elements are separate teaching arithmetic","Add beam torsion/other-axis/critical sections and source-specific load envelopes; then independently test columns, slabs, foundations, stairs and ductile detailing"),
       ("Annex, references","P–M–M figures, capacity ratios, report conclusions and codes","Source SHA/JSON/CSV, test results, one reproducible report and printable example","Traceable user-reviewed report generation, full detail sheets and engineer's issue/approval workflow")])
     sections=[
       ("answer","01 — Product status in one paragraph",f"""<p><strong>We have working numerical OpenSees engines and a report skeleton, not a finished whole-building structural design generator.</strong>
