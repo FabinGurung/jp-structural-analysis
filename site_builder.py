@@ -15,6 +15,7 @@ from r6p23.engine import build as solve, digest as model_digest
 from r6p23.runner import reference_fixture
 from r6p30.beam_design import member_checks_from_preview
 from r6p30.column_pmm import column_checks_from_preview
+from r6p30.column_validation import compute as column_benchmark
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
 ORIGINAL_REPORT="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -89,7 +90,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col):
+def report(spec,solved,beam,col,verification):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -122,12 +123,17 @@ def report(spec,solved,beam,col):
     ctable=table(("Item","Governing approximate P–M–M value"),[
        ("Source column",gov["member"]+" / "+gov["end"]+" / "+gov["diaphragm"]),
        ("Synthetic U case",gov["combination"]),
-       ("Assumed compressive Pu = |signed local N|",n(cv["Pu_assumed_compression_kN"])+" kN"),
+       ("Signed original local N",n(gov["signed_local_actions"]["N"])+" kN"),
+       ("Mapped compression (I:+N; J:−N)",n(gov["compression_signed_kN"])+" kN"),
+       ("Compression action screened Pu",n(cv["Pu_assumed_compression_kN"])+" kN"),
        ("Signed local My / Mz",n(cv["signed_local_My_kNm"])+" / "+n(cv["signed_local_Mz_kNm"])+" kNm"),
        ("Puz reference",n(cv["Puz_IS456_kN"])+" kN"),
        ("Approx. uniaxial My1 / Mz1",n(cv["My1_approx_capacity_kNm"])+" / "+n(cv["Mz1_approx_capacity_kNm"])+" kNm"),
        ("IS456 39.6 αn",n(cv["biaxial_exponent_alpha"])),
+       ("Minimum eccentricity scenario (one axis at a time)",
+        cv["minimum_eccentricity_governing"]),
        ("Biaxial interaction measure",n(cv["biaxial_load_contour_utilization"])),
+       ("Excluded axial tension cases",str(col["axial_tension_rows_excluded"])),
        ("Approximate screen results",str(col["approx_screen_ok_count"])+"/64 within bounded model"),
     ])
     chapters=[
@@ -156,8 +162,8 @@ def report(spec,solved,beam,col):
         'uniaxial fiber strain-compatibility section strength at a given Pu, then the IS456 '
         '§39.6 biaxial load-contour exponent.</p>'
         '<div class="note">The column uniaxial capacities are numerical approximations, NOT verified SP16 '
-        'chart capacities. Axial member-end signs are treated as an absolute compression proxy in '
-        'this demonstration and must be resolved for a real design.</div>'),
+        'chart capacities. Axial member-end forces now follow the signed I/J compression convention in '
+        'this demonstration. Tension cases are excluded, not disguised as compression. The uniaxial capacities remain outside SP16 verification.</div>'),
        ("chapter4","4.0 Structural Model",
         f'<p>Exact conforming shared nodes; {tf["shell_count"]} ShellMITC4 plates, '
         f'{tf["beam_segment_count"]} beam segments, {tf["column_segment_count"]} column segments, '
@@ -175,14 +181,30 @@ def report(spec,solved,beam,col):
         '<h3>6.2 Column axial load and biaxial bending</h3>'+ctable+
         '<p>64 end-case interactions use signed simultaneous local N, My and Mz from actual '
         'OpenSees results. The isolated biaxial contour is (|My|/My1)^α+(|Mz|/Mz1)^α, '
-        'including a minimum eccentricity proxy; the uniaxial capacities derive from '
-        'an explicitly approximate 64-fiber compression block. '
+        'including the one-axis-at-a-time minimum eccentricity rule; the uniaxial capacities derive from '
+        'an approximate 64-strip compression block with distinct full-compression and tension-zone strain assumptions. '
         +A('data/column-pmm-checks.csv','Inspect all 64 column checks (CSV)')+'.</p>'
         '<div class="note"><strong>Not a completed structural design:</strong> no signed '
-        'compressive axial mapping from element I/J, original-project seismic actions, '
+        'real-world member orientation and design load sign verification, original-project seismic actions, '
         'slenderness/P-Δ, ductile confinement, joint forces, development length, '
         'verified SP16 column capacity diagrams, or independent columns/slabs/footing/staircase '
         'design for Narayani. The original F3 one-way shear result remains NOT SAFE.</div>'
+        '<h3>6.2.1 Independent numerical verification</h3>'
+        '<p>IS456:2000 Clause 39.1(a) uniform compression imposes ε=0.002. '
+        'For the assumed Fe500 steel, Es×ε=400 MPa, below 0.87fy=435 MPa. '
+        'Our <strong>closed-form uniform axial force</strong> is '
+        +n(verification["closed_form_P_at_uniform_epsilon_0002_kN"])+' kN; '
+        'independent numerical integration gives '
+        +n(verification["numerical_256_strip_P_at_uniform_epsilon_0002_kN"])+' kN. '
+        'The relative discrepancy is '
+        +n(100*verification["relative_pure_axial_error"])+'%. '
+        'Additional 32/64/128 strip comparisons cover tension-zone and wholly '
+        'compressed neutral-axis positions, with §39.1(b) full compression strain '
+        'properly limited below 0.0035.</p>'
+        +A('data/column-verification.json','Inspect benchmark numbers and assumptions')+'.'
+        '<div class="note">These checks verify numerical consistency and signed '
+        'input mapping; they do NOT validate the approximate steel model against '
+        'SP16 charts, any final actual-column design, or construction approval.</div>'
         '<h3>6.3 Additional original-report elements</h3><p>Slab reinforcement, isolated '
         'and combined footings, and stair reinforcement are outside the current production '
         'design modules. Their past exploratory outputs are stored in the Drive archive '
@@ -204,6 +226,9 @@ def build(out:Path=Path("site")):
     out.mkdir(parents=True,exist_ok=True)
     data=out/"data";data.mkdir(exist_ok=True)
     spec,solved,beam,col=read_actual_solver()
+    verification=column_benchmark()
+    (data/"column-verification.json").write_text(json.dumps(verification,indent=2,
+        sort_keys=True,allow_nan=False)+"\n")
     # Preserve the signed independent numerical evidence, but not every
     # historical experiment or intermediate image in the public site.
     result={"schema":"jp.structural.clean.report.v1",
@@ -213,6 +238,7 @@ def build(out:Path=Path("site")):
       "source_loads_kN":solved["source_ledger"]["gravity_totals_kN"],
       "topology":{"shells":31,"beams":32,"columns":8},
       "beam_checks":beam,"column_pmm_checks":col,
+      "column_capacity_verification":verification,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -228,13 +254,13 @@ def build(out:Path=Path("site")):
           for r in beam["all_qualifying_beam_end_case_rows"]])
     write_csv(data/"column-pmm-checks.csv",
         ("mode","member","end","combo","signed_N","signed_My","signed_Mz",
-         "Pu_compression_proxy_kN","My1_approx_kNm","Mz1_approx_kNm",
-         "alpha","interaction","screen"),
+         "N_mapped_compression_kN","Pu_screen_kN","My1_approx_kNm","Mz1_approx_kNm",
+         "alpha","min_eccentricity_alternative","interaction","screen"),
         [(r["diaphragm"],r["member"],r["end"],r["combination"],
           r["signed_local_actions"]["N"],r["signed_local_actions"]["My"],
-          r["signed_local_actions"]["Mz"],r["PMM"]["Pu_assumed_compression_kN"],
+          r["signed_local_actions"]["Mz"],r["compression_signed_kN"],r["PMM"]["Pu_assumed_compression_kN"],
           r["PMM"]["My1_approx_capacity_kNm"],r["PMM"]["Mz1_approx_capacity_kNm"],
-          r["PMM"]["biaxial_exponent_alpha"],r["PMM"]["biaxial_load_contour_utilization"],
+          r["PMM"].get("biaxial_exponent_alpha"),r["PMM"].get("minimum_eccentricity_governing"),r["PMM"]["biaxial_load_contour_utilization"],
           r["PMM"]["status"]) for r in col["rows"]])
     home=page("Structural Analysis",
        "A simple working studio: review your building and generate a reproducible structural report.",
@@ -296,7 +322,7 @@ def build(out:Path=Path("site")):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col)}
+           "report.html":report(spec,solved,beam,col,verification)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
@@ -321,6 +347,9 @@ def verify(out:Path):
     assert "NOT SAFE" in (out/"projects.html").read_text()
     result=json.loads((out/"data/report-results.json").read_text())
     assert result["original_narayani_F3_NOT_SAFE"]
+    assert result["column_capacity_verification"]["relative_pure_axial_error"]<.001
+    assert result["column_capacity_verification"]["sp16_verified"] is False
+    assert result["column_pmm_checks"]["axial_tension_rows_excluded"]>=0
     assert not result["original_project_engineering_approval"]
     for file,sha in receipt["files_sha256"].items():
         assert hashlib.sha256((out/file).read_bytes()).hexdigest()==sha,file

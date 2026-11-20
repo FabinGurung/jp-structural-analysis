@@ -1,6 +1,7 @@
 """Full product integration against a fresh OpenSees solve."""
 import csv
 import json
+import pytest
 from pathlib import Path
 from site_builder import build,verify,DRIVE_ARCHIVE,NAV
 
@@ -22,6 +23,19 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert data["column_pmm_checks"]["source_SHA256"]==data["model_source_SHA256"]
   assert data["beam_checks"]["source_fixture_sha256"]==data["model_source_SHA256"]
   assert data["column_pmm_checks"]["approx_screen_ok_count"]<=64
+  assert data["column_pmm_checks"]["axial_tension_rows_excluded"]==0
+  assert data["column_pmm_checks"]["local_column_I_J_force_sign_reviewed_on_fixture"]
+  assert data["column_capacity_verification"]["relative_pure_axial_error"]<.001
+  assert not data["column_capacity_verification"]["sp16_verified"]
+  assert (dest/"data/column-verification.json").exists()
+  checks=data["column_pmm_checks"]["rows"]
+  assert all(x["compression_signed_kN"]>0 for x in checks)
+  assert all(x["compression_signed_kN"]==pytest.approx(
+       x["signed_local_actions"]["N"] if x["end"]=="I"
+       else -x["signed_local_actions"]["N"]) for x in checks)
+  assert all(x["PMM"]["minimum_eccentricity_rule"]==
+       "ONE_AXIS_AT_A_TIME_WORST_ALTERNATIVE_IS456_25_4" for x in checks)
+
   assert data["beam_checks"]["isolated_screen_flexure_ok_count"]<=256
   assert DRIVE_ARCHIVE in (dest/"more.html").read_text()
   assert "R6P" not in (dest/"index.html").read_text()
