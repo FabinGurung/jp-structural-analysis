@@ -100,6 +100,28 @@ def report(spec,solved,beam,col,verification):
     sh=beam["governing_vertical_shear_row"]
     gov=col["governing_example"]
     cv=gov["PMM"]
+    external=verification["external_sp16_nptel_reference"]
+    external_table=table(("Capacity or check","NPTEL SP16 chart-derived value","Our independently calculated value","Difference"),[
+      ("Long-axis uniaxial moment",
+        n(external["reference_major_M_kNm"])+" kN·m",
+        n(external["our_major_approx_M_kNm"])+" kN·m",
+        n(100*external["major_relative_difference"])+"%"),
+      ("Short-axis uniaxial moment",
+        n(external["reference_minor_M_kNm"])+" kN·m",
+        n(external["our_minor_approx_M_kNm"])+" kN·m",
+        n(100*external["minor_relative_difference"])+"%"),
+      ("Puz, axial code reference",
+        n(external["external_source_inputs"]["published_Puz_kN"])+" kN",
+        n(external["computed_Puz_kN"])+" kN","published rounded values"),
+      ("Biaxial exponent αn",
+        n(external["reference_alpha_rounded"]),
+        n(external["computed_alpha"]),
+        "code interpolation vs rounded lesson"),
+      ("Biaxial interaction",
+        n(external["published_reference_interaction_rounded"]),
+        n(external["our_approx_biaxial_interaction"]),
+        "NOT a whole-building design check"),
+    ])
     summary=table(("Report scope","Computed information","What it means"),[
       ("3-D elastic FE","31 shells · 32 beams · 8 columns","Actually solved by OpenSeesPy"),
       ("Dead load",n(loading["DL"])+" kN","Source-derived synthetic model ledger"),
@@ -205,6 +227,33 @@ def report(spec,solved,beam,col,verification):
         '<div class="note">These checks verify numerical consistency and signed '
         'input mapping; they do NOT validate the approximate steel model against '
         'SP16 charts, any final actual-column design, or construction approval.</div>'
+        '<h3>6.2.2 Independent published SP16-chart example comparison</h3>'
+        '<p>External worked case: a 450 × 500 mm short rectangular column, '
+        '12Ø16 longitudinal bars with 56 mm bar-centre cover, M25 concrete '
+        'and Fe415 steel, with Pu=1,600 kN. IIT Kharagpur (NPTEL), '
+        'Lesson 26, Q.5/A.5 interpolates SP16 Charts 44–45. '
+        +A(external["reference_url"],'Read the original NPTEL reference')+'. '
+        'We independently recompute the approximate uniaxial capacities for '
+        'the same stated material and section parameters. The 12 bar-centres '
+        'are assumed equally distributed on the perimeter.</p>'
+        +external_table+
+        '<p>Both directional approximate moment predictions fall within '
+        '<strong>±3% of the published chart-derived capacities</strong>, '
+        'a predefined research comparison band, not a certified code tolerance. '
+        'The figure caption says M20 while the formal question and answer '
+        'use M25; the numerical comparison follows the answered M25 case, '
+        'without silently removing this inconsistency. '
+        'The lesson uses rounded alpha and moment values, so its reported '
+        'interaction is not an exact floating-point source for verification. '
+        'The live hypothetical building above still uses its original 400 × 400 mm '
+        '8-bar assumptions; the NPTEL benchmark is separate.</p>'
+        '<div class="note">One published worked example is an independent '
+        'cross-check, not a complete validation of SP16 Charts 44–45, other '
+        'steel grades, column layout assumptions, biaxial interaction surfaces, '
+        'earthquake design or Narayani project safety. Source status: '
+        '<strong>provisionally benchmarked; SP16 chart-suite verification remains open</strong>.</div>'
+        +A('data/column-verification.json','Inspect both reference and independent numerical evidence')+'.'
+
         '<h3>6.3 Additional original-report elements</h3><p>Slab reinforcement, isolated '
         'and combined footings, and stair reinforcement are outside the current production '
         'design modules. Their past exploratory outputs are stored in the Drive archive '
@@ -313,7 +362,8 @@ def build(out:Path=Path("site")):
          f'<p>{A(ORIGINAL_REPORT,"Revised original structural PDF")}'
          f' · {A(ORIGINAL_DRAWING,"Structural drawings")} '
          f' · {A(ORIGINAL_SOIL,"Soil study")} '
-         f' · {A(CODE_IS456,"IS 456:2000 with amendments")}</p>')+
+         f' · {A(CODE_IS456,"IS 456:2000 with amendments")}'
+         f' · {A("https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l26.pdf","NPTEL SP16 column example")}</p>')+
        box("Active calculations",
          f'<p>{A("report.html","Working six-chapter report")} · '
          f'{A("data/report-results.json","Reproducible current calculations")}'
