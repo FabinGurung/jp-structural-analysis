@@ -83,7 +83,7 @@ def compare_nptel_sp16():
 
 
 def compute():
-    nptel=compare_nptel_sp16()
+ nptel=compare_nptel_sp16()
  v=ASSUMED
  key=(v["b_mm"],v["D_mm"],v["fck_MPa"],v["fy_MPa"],
       v["bar_d_mm"],v["bar_center_cover_mm"],v["Es_MPa"])
