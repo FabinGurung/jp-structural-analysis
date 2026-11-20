@@ -14,7 +14,7 @@ from pathlib import Path
 from r6p23.engine import build as solve, digest as model_digest
 from r6p23.runner import reference_fixture
 from r6p30.beam_design import member_checks_from_preview
-from r6p30.column_pmm import column_checks_from_preview
+from r6p30.column_pmm import column_checks_from_preview, ASSUMED, puz_kN, steel_area, _uniaxial_response, uniaxial_at_pu
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
 ORIGINAL_REPORT="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -122,12 +122,17 @@ def report(spec,solved,beam,col):
     ctable=table(("Item","Governing approximate P–M–M value"),[
        ("Source column",gov["member"]+" / "+gov["end"]+" / "+gov["diaphragm"]),
        ("Synthetic U case",gov["combination"]),
-       ("Assumed compressive Pu = |signed local N|",n(cv["Pu_assumed_compression_kN"])+" kN"),
+       ("Signed original local N",n(gov["signed_local_actions"]["N"])+" kN"),
+       ("Mapped compression (I:+N; J:−N)",n(gov["compression_signed_kN"])+" kN"),
+       ("Compression action screened Pu",n(cv["Pu_assumed_compression_kN"])+" kN"),
        ("Signed local My / Mz",n(cv["signed_local_My_kNm"])+" / "+n(cv["signed_local_Mz_kNm"])+" kNm"),
        ("Puz reference",n(cv["Puz_IS456_kN"])+" kN"),
        ("Approx. uniaxial My1 / Mz1",n(cv["My1_approx_capacity_kNm"])+" / "+n(cv["Mz1_approx_capacity_kNm"])+" kNm"),
        ("IS456 39.6 αn",n(cv["biaxial_exponent_alpha"])),
+       ("Minimum eccentricity scenario (one axis at a time)",
+        cv["minimum_eccentricity_governing"]),
        ("Biaxial interaction measure",n(cv["biaxial_load_contour_utilization"])),
+       ("Excluded axial tension cases",str(col["axial_tension_rows_excluded"])),
        ("Approximate screen results",str(col["approx_screen_ok_count"])+"/64 within bounded model"),
     ])
     chapters=[
@@ -156,8 +161,8 @@ def report(spec,solved,beam,col):
         'uniaxial fiber strain-compatibility section strength at a given Pu, then the IS456 '
         '§39.6 biaxial load-contour exponent.</p>'
         '<div class="note">The column uniaxial capacities are numerical approximations, NOT verified SP16 '
-        'chart capacities. Axial member-end signs are treated as an absolute compression proxy in '
-        'this demonstration and must be resolved for a real design.</div>'),
+        'chart capacities. Axial member-end forces now follow the signed I/J compression convention in '
+        'this demonstration. Tension cases are excluded, not disguised as compression. The uniaxial capacities remain outside SP16 verification.</div>'),
        ("chapter4","4.0 Structural Model",
         f'<p>Exact conforming shared nodes; {tf["shell_count"]} ShellMITC4 plates, '
         f'{tf["beam_segment_count"]} beam segments, {tf["column_segment_count"]} column segments, '
@@ -175,11 +180,11 @@ def report(spec,solved,beam,col):
         '<h3>6.2 Column axial load and biaxial bending</h3>'+ctable+
         '<p>64 end-case interactions use signed simultaneous local N, My and Mz from actual '
         'OpenSees results. The isolated biaxial contour is (|My|/My1)^α+(|Mz|/Mz1)^α, '
-        'including a minimum eccentricity proxy; the uniaxial capacities derive from '
-        'an explicitly approximate 64-fiber compression block. '
+        'including the one-axis-at-a-time minimum eccentricity rule; the uniaxial capacities derive from '
+        'an approximate 64-strip compression block with distinct full-compression and tension-zone strain assumptions. '
         +A('data/column-pmm-checks.csv','Inspect all 64 column checks (CSV)')+'.</p>'
         '<div class="note"><strong>Not a completed structural design:</strong> no signed '
-        'compressive axial mapping from element I/J, original-project seismic actions, '
+        'real-world member orientation and design load sign verification, original-project seismic actions, '
         'slenderness/P-Δ, ductile confinement, joint forces, development length, '
         'verified SP16 column capacity diagrams, or independent columns/slabs/footing/staircase '
         'design for Narayani. The original F3 one-way shear result remains NOT SAFE.</div>'
@@ -228,13 +233,13 @@ def build(out:Path=Path("site")):
           for r in beam["all_qualifying_beam_end_case_rows"]])
     write_csv(data/"column-pmm-checks.csv",
         ("mode","member","end","combo","signed_N","signed_My","signed_Mz",
-         "Pu_compression_proxy_kN","My1_approx_kNm","Mz1_approx_kNm",
-         "alpha","interaction","screen"),
+         "N_mapped_compression_kN","Pu_screen_kN","My1_approx_kNm","Mz1_approx_kNm",
+         "alpha","min_eccentricity_alternative","interaction","screen"),
         [(r["diaphragm"],r["member"],r["end"],r["combination"],
           r["signed_local_actions"]["N"],r["signed_local_actions"]["My"],
-          r["signed_local_actions"]["Mz"],r["PMM"]["Pu_assumed_compression_kN"],
+          r["signed_local_actions"]["Mz"],r["compression_signed_kN"],r["PMM"]["Pu_assumed_compression_kN"],
           r["PMM"]["My1_approx_capacity_kNm"],r["PMM"]["Mz1_approx_capacity_kNm"],
-          r["PMM"]["biaxial_exponent_alpha"],r["PMM"]["biaxial_load_contour_utilization"],
+          r["PMM"].get("biaxial_exponent_alpha"),r["PMM"].get("minimum_eccentricity_governing"),r["PMM"]["biaxial_load_contour_utilization"],
           r["PMM"]["status"]) for r in col["rows"]])
     home=page("Structural Analysis",
        "A simple working studio: review your building and generate a reproducible structural report.",
