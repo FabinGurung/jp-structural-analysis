@@ -24,7 +24,7 @@ def test_original_footing_failed_but_preferred_revision_is_only_trial():
  assert not after["construction_approval"]
  assert "UNIFORM" in after["this_trial_geometry"]
  assert "SLOPED" in after["original_source_footing_geometry"]
- assert "source 2.1m vs G1 1.8m" in " ".join(z["unresolved_engineering_gates"])
+ assert "2.1x2.1" in " ".join(z["unresolved_engineering_gates"]) and "1.8x1.8" in " ".join(z["unresolved_engineering_gates"])
 def test_soil_eccentricity_and_cover_sensitivity_remain_gated():
  z=study()
  a=z["cover_75mm_sensitivity_550mm"]
