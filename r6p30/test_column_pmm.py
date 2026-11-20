@@ -97,7 +97,9 @@ def test_is456_39_1_full_compression_strain_pivot_and_axial_limit():
   assert top==pytest.approx(.002,rel=.000001)
   p,m=_uniaxial_response(*kw,1.e10,"My",n_slices=256)
   Ac=s["b_mm"]*s["D_mm"]-steel_area(s)
-  estimated=(.446*s["fck_MPa"]*Ac+.87*s["fy_MPa"]*steel_area(s))/1000.
+  estimated=(.446*s["fck_MPa"]*Ac+min(.87*s["fy_MPa"],s["Es_MPa"]*.002)*steel_area(s))/1000.
+  # At epsilon=.002 Fe500 steel is at 400 MPa (Es*epsilon), below .87fy=435 MPa.
+  # Do NOT assume a fully plastic compression bar where strain cannot develop it.
   assert p==pytest.approx(estimated,rel=.001)
   assert m==pytest.approx(0.,abs=.01)
   # 39.1(b) wholly compressed must have strain_top below .0035
