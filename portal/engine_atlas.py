@@ -6,7 +6,7 @@ It NEVER calls the Narayani project results an engineer-approved structure.
 from __future__ import annotations
 from hashlib import sha256
 from html import escape as e
-import json,math
+import json,math,csv
 from pathlib import Path
 from r6p30.beam_design import member_checks_from_preview, CASES as BEAM_CASE_FACTORS
 from r6p30.report_beam_html import render_beam_chapter
@@ -446,12 +446,35 @@ def build(site:Path):
     folder=site/"reports/example-sar";folder.mkdir(parents=True,exist_ok=True)
     raw=folder/"example-sar-numbers.json"
     raw.write_text(json.dumps(d,indent=2,sort_keys=True,ensure_ascii=False,allow_nan=False)+"\n",encoding="utf8")
+    # Human-auditable 256-row evidence export: retain all six signed components,
+    # section dimensions and independently calculated strength classifications.
+    r=d["beam_rc_screens_R6p31"]
+    beamcsv=folder/"beam-end-checks.csv"
+    headers=("diaphragm","case","member","end","N_kN","Vy_kN","Vz_kN",
+             "T_kNm","My_kNm","Mz_kNm","Mu_required_kNm","As_required_mm2",
+             "As_assumed_mm2","Mu_resistance_kNm","Vu_required_kN",
+             "tau_v_MPa","tau_c_MPa","tau_cmax_MPa",
+             "provided_stirrup_spacing_mm","max_allowable_stirrup_spacing_mm",
+             "flexure_section_check","shear_section_check","professional_approval")
+    with beamcsv.open("w",encoding="utf8",newline="") as stream:
+        writer=csv.writer(stream)
+        writer.writerow(headers)
+        for row in r["all_qualifying_beam_end_case_rows"]:
+            a=row["signed_local_actions"]
+            f=row["flexure"];v=row["shear"]
+            writer.writerow((row["mode"],row["case"],row["member"],row["end"],
+              *(a[key] for key in ("N","Vy","Vz","T","My","Mz")),
+              f["Mu_abs_kNm"],f["As_required_including_min_mm2"],
+              f["As_provided_tension_mm2"],f["Mu_res_provided_kNm"],
+              v["Vu_abs_kN"],v["tau_v_MPa"],v["tau_c_MPa"],v["tau_cmax_MPa"],
+              v["stirrup_spacing_provided_mm"],v["stirrup_s_upper_bound_mm"],
+              f["status"],v["status"],False))
     receipt={"schema":"jp.sar.example_engine_atlas_receipt.v1",
              "example_source_preview_sha256":d["source_preview_sha256"],
              "model_source_SHA256":d["source_fixture_sha256"],
              "engineering_approval":False,"files_sha256":{
                 name:sha256((site/name).read_bytes()).hexdigest() for name in
-                ("engine-explained.html","example-sar-report.html","reports/example-sar/example-sar-numbers.json")}}
+                ("engine-explained.html","example-sar-report.html","reports/example-sar/example-sar-numbers.json","reports/example-sar/beam-end-checks.csv")}}
     (folder/"receipt.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n",encoding="utf8")
     verify(site)
     return receipt
@@ -471,6 +494,22 @@ def verify(site:Path):
     for name,h in q["files_sha256"].items():
         need(sha256((site/name).read_bytes()).hexdigest()==h,
              "generated HTML/JSON SHA drift "+name)
+    beam=data["beam_rc_screens_R6p31"]
+    need(beam["schema"]=="jp.sar.r6p31.is456_synthetic_beam_strength_screens.v1",
+         "beam module missing or wrong schema")
+    need(beam["source_fixture_sha256"]==data["source_fixture_sha256"],
+         "beam checks not derived from real FE input digest")
+    need(beam["rows_count"]==beam["beam_count"]*2*2*2 and beam["beam_count"]==32,
+         "complete R6.23 signed beam-end coverage lost")
+    need(beam["professional_engineering_approval"] is False and
+         beam["member_design_complete"] is False and
+         beam["original_narayani_F3_NOT_SAFE_retained"],
+         "beam isolated-check success cannot imply construction approval")
+    with (folder/"beam-end-checks.csv").open(encoding="utf8",newline="") as fp:
+        table=list(csv.DictReader(fp))
+    need(len(table)==beam["rows_count"],"source-signed CSV end-count mismatch")
+    need(set(("My_kNm","Vz_kN","T_kNm","As_required_mm2","tau_c_MPa"))<=set(table[0]),
+         "beam action/resistance CSV column evidence missing")
     h=(site/"example-sar-report.html").read_text()
     for term in ("1.0 Introduction","2.0 General Data for Structural Analysis",
                  "3.0 Analysis and Design Procedure","4.0 Modeling in OpenSeesPy",
