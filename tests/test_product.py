@@ -33,6 +33,22 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert abs(ext["major_relative_difference"])<.03
   assert abs(ext["minor_relative_difference"])<.03
   assert ext["full_SP16_chart_verification"] is False
+  assert data["column_capacity_verification"]["external_sp16_nptel_twenty_bar_reference"]["published_Mu_kNm"]==pytest.approx(116.04,abs=.01)
+  assert abs(data["column_capacity_verification"]["external_sp16_nptel_twenty_bar_reference"]["relative_difference"])<.03
+  assert data["column_capacity_verification"]["steel_stress_at_uniform_epsilon_0002_MPa"]<400
+  f3=data["f3_proposed_concentric_redesign_study"]
+  assert f3["original_report_F3_status"]=="NOT SAFE IN ONE WAY SHEAR"
+  assert f3["historical_not_safe_preserved"]
+  assert not f3["approved_for_construction"]
+  assert f3["preferred_uniform_revision_550mm"]["uniform_thickness_m"]==.55
+  assert f3["preferred_uniform_revision_550mm"]["listed_concentric_checks_pass"]
+  assert not f3["original_report_adopted_uniform_trial_450mm"]["concentric_check_flags"]["source_report_tau_0p20"]
+  assert (dest/"data/f3-trial.json").exists()
+  assert "6.3 Narayani F3" in (dest/"report.html").read_text()
+  assert "R6.35 engineer-review PDF" in (dest/"more.html").read_text()
+  assert "NOT SAFE" in (dest/"projects.html").read_text()
+  assert "550mm" in (dest/"projects.html").read_text()
+
   assert ext["construction_approval"] is False
   assert "M20" in ext["source_conflict_preserved"]
   assert "M25" in ext["source_conflict_preserved"]
