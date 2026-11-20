@@ -1,0 +1,72 @@
+name: TEMPORARY JP SAR pre-cleanup complete archive
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/zz-precleanup-archive.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch all available repository and Git history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Package full source tree, refs, metadata and Git bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p staging
+          git fetch --tags --prune origin '+refs/heads/*:refs/remotes/origin/*'
+          git for-each-ref --format='%(refname) %(objectname) %(creatordate:iso8601)' > staging/refs.txt
+          git rev-parse HEAD > staging/current-main-commit.txt
+          git status --porcelain=v1 > staging/dirty-status.txt
+          git ls-files > staging/tracked-files.txt
+          python - <<'PY'
+          import json, hashlib, pathlib, os, subprocess
+          files=[]
+          for raw in pathlib.Path("staging/tracked-files.txt").read_text().splitlines():
+              p=pathlib.Path(raw)
+              if p.is_file():
+                  content=p.read_bytes()
+                  files.append({"path":raw,"size":len(content),"sha256":hashlib.sha256(content).hexdigest()})
+          q={"schema":"jp.sar.archive.precleanup.source_index.v1",
+             "source_repo":os.environ["GITHUB_REPOSITORY"],
+             "main_commit":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),
+             "file_count":len(files),"tracked_bytes":sum(f["size"] for f in files),
+             "files":files,
+             "workflow_files":[f["path"] for f in files if f["path"].startswith(".github/workflows/")],
+             "construction_approval":False}
+          pathlib.Path("staging/MANIFEST.json").write_text(json.dumps(q,indent=2,sort_keys=True)+"\n")
+          assert len(files)>=100 and q["tracked_bytes"]>=800000
+          print("ORIGINAL_REPO_FILE_COUNT",len(files),"SHA",q["main_commit"])
+          PY
+          git bundle create staging/JP_SAR_GIT_FULL_HISTORY.bundle --all
+          git bundle verify staging/JP_SAR_GIT_FULL_HISTORY.bundle
+          tar --exclude='./.git' --exclude='./staging' -czf staging/JP_SAR_SOURCE_SNAPSHOT.tar.gz .
+          (
+            cd staging
+            sha256sum JP_SAR_GIT_FULL_HISTORY.bundle JP_SAR_SOURCE_SNAPSHOT.tar.gz MANIFEST.json > SHA256SUMS.txt
+            cat SHA256SUMS.txt
+          )
+          test -s staging/JP_SAR_GIT_FULL_HISTORY.bundle
+          test -s staging/JP_SAR_SOURCE_SNAPSHOT.tar.gz
+      - name: Publish temporary downloadable archive for verified Drive transfer
+        uses: actions/upload-artifact@v4
+        with:
+          name: JP_SAR_COMPLETE_PRE_CLEANUP_SOURCE_AND_GIT__20261120
+          path: |
+            staging/JP_SAR_GIT_FULL_HISTORY.bundle
+            staging/JP_SAR_SOURCE_SNAPSHOT.tar.gz
+            staging/MANIFEST.json
+            staging/SHA256SUMS.txt
+            staging/refs.txt
+            staging/current-main-commit.txt
+            staging/tracked-files.txt
+            staging/dirty-status.txt
+          if-no-files-found: error
+          retention-days: 14
