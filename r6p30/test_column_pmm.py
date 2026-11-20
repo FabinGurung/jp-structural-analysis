@@ -152,3 +152,37 @@ def test_slender_or_underreinforced_columns_do_not_receive_short_pmm_approval():
                  {"unsupported_height_mm":-10}):
     with pytest.raises(ValueError):
       validate({**ASSUMED,**update})
+
+
+def test_external_iit_kharagpur_sp16_chart_reference_without_reusing_our_own_answer():
+  from r6p30.column_validation import compare_nptel_sp16, NPTEL_REFERENCE
+  from r6p30.column_pmm import bar_positions,uniaxial_at_pu,steel_area
+  n=NPTEL_REFERENCE
+  assert n["published_Mx1_kNm"]==246.376
+  assert n["published_My1_kNm"]==215.156
+  assert n["Pu_kN"]==1600 and n["fy_MPa"]==415 and n["fck_MPa"]==25
+  assert "M20" in n["source_inconsistency"] and "M25" in n["source_inconsistency"]
+  section={k:n[k] for k in ("b_mm","D_mm","fck_MPa","fy_MPa","bar_d_mm",
+     "bar_count","bar_center_cover_mm","unsupported_height_mm",
+     "effective_height_mm","Es_MPa")}
+  points=bar_positions(section)
+  assert len(points)==12 and len(set(points))==12
+  assert max(x for x,y in points)==pytest.approx(225-56)
+  assert max(y for x,y in points)==pytest.approx(250-56)
+  assert steel_area(section)==pytest.approx(12*math.pi*16**2/4)
+  assert uniaxial_at_pu(1600,section,"My")["P_reconstructed_kN"]==pytest.approx(1600,abs=.002)
+  assert uniaxial_at_pu(1600,section,"Mz")["P_reconstructed_kN"]==pytest.approx(1600,abs=.002)
+  q=compare_nptel_sp16()
+  assert q["reference_major_M_kNm"]==pytest.approx(246.376)
+  assert q["reference_minor_M_kNm"]==pytest.approx(215.156)
+  assert q["our_major_approx_M_kNm"]==pytest.approx(247.24,abs=1.5)
+  assert q["our_minor_approx_M_kNm"]==pytest.approx(218.45,abs=1.5)
+  assert abs(q["major_relative_difference"])<.03
+  assert abs(q["minor_relative_difference"])<.03
+  assert q["both_axes_within_benchmark_band"]
+  assert q["predeclared_acceptance_band_fraction"]==pytest.approx(.03)
+  assert q["our_approx_biaxial_interaction"]<1
+  assert q["reference_interaction_recomputed_from_published_chart"]==pytest.approx(.66,abs=.01)
+  assert not q["full_SP16_chart_verification"]
+  assert not q["construction_approval"]
+  assert "not" in q["note"].lower()
