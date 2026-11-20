@@ -9,6 +9,7 @@ from html import escape as e
 import json,math
 from pathlib import Path
 from r6p30.beam_design import member_checks_from_preview, CASES as BEAM_CASE_FACTORS
+from r6p30.report_beam_html import render_beam_chapter
 
 ORIGINAL="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
 REPO="https://github.com/FabinGurung/jp-structural-analysis"
@@ -253,6 +254,7 @@ def example_report(d):
     a=d["assumptions"];top=d["topology"];r=d["FE_results"];s=d["sample_member_arithmetic"];loads=d["loads_kN"]
     txt=lambda x:e(money(x,3))
     specimen=s["beam"];slab=s["slab"];foot=s["footing"];col=s["column"]
+    beam_detail=render_beam_chapter(d["beam_rc_screens_R6p31"])
     overview=f"""<p>Learning model: a <b>completely hypothetical two-floor reinforced-concrete frame and slab demonstration</b>.
 This PDF-style report follows the six numbered chapters of the <a href="{ORIGINAL}">original ETABS report</a> without copying its result values.
 All frame and shell reactions in Chapter 5 come from the already executed <code>r6p23.engine.build()</code>
@@ -329,7 +331,7 @@ This is not a seismic response-spectrum or nonlinear plastic hinge model.</p>"""
        ("results","5.0 Design Output and Structural Checks",modetable+"""<div class="ok"><b>Numerical verification:</b> signed force/moment equilibrium passes for both diaphragm alternatives and all published cases. This demonstrates a working OpenSees numerical model. It is not a seismic compliance check.</div>
 <h3>What the source ETABS report additionally contains</h3>
 <p>Model mass participation, seismic base shear, mode shapes, drift, torsional irregularity, soft-storey and load-combination checks. Those quantities are not generated for this synthetic HX reference case, so they are not printed as fake zeroes.</p>"""),
-       ("design","6.0 Design of Structural Elements",beamtable+f"""<h3>How the arithmetic was obtained</h3>
+       ("design","6.0 Design of Structural Elements",beam_detail+beamtable+f"""<h3>6.3 Other illustrative member arithmetic</h3>
 <p><b>Beam:</b> M<sub>u</sub> comes from a <em>real</em> signed FE end-force envelope at
 {e(r["selected_signed_beam_envelope"]["member"])}. Flexure example uses
 M<sub>u</sub> = 0.87 f<sub>y</sub> A<sub>st</sub> (d − 0.42x<sub>u</sub>)
@@ -342,7 +344,7 @@ different. <b>Footing:</b> gross q=[R<sub>DL</sub>+R<sub>LL</sub>+footing weight
 and trial V<sub>u</sub>=q<sub>u</sub> B(a−d) for a centred column.
 The footing and stair geometry do not exist in the OpenSees benchmark.</p>
 <div class="wire"><b>Not an issued structural design:</b> no reliable code-based seismic action
-combination, P–M–M interaction, shear reinforcement, ductile joints, two-way slab detailing,
+combination, P–M–M interaction, actual torsion/other-axis beam design, ductile joints, two-way slab detailing,
 soil springs, footing punching and eccentricity, staircase structural moments, or full schedule
 has been passed or certified. These are the exact future calculation modules to connect,
 not failures of the present completed shell/frame solver.</div>"""),
@@ -350,7 +352,7 @@ not failures of the present completed shell/frame solver.</div>"""),
 <a href="{REPO}/blob/main/r6p23/runner.py">r6p23/runner.py reference_fixture()</a>,
 <a href="{REPO}/blob/main/r6p23/engine.py">r6p23/engine.py build()</a>.
 Published solved model: <a href="data/r6p23-preview.json">OpenSees source/result JSON</a>.
-This educational report: <a href="reports/example-sar/example-sar-numbers.json">machine-readable calculations</a>.
+This educational report: <a href="reports/example-sar/example-sar-numbers.json">machine-readable calculations</a> and <a href="reports/example-sar/beam-end-checks.csv">complete beam-end strength screens (CSV)</a>.
 All FE numbers originate from the checksum-matched source fixture and GitHub Actions execution.</p>
 <p>Original report whose <i>organization</i> is followed: <a href="{ORIGINAL}">new nbc2025 report REVISED(1).pdf</a>
 (pp. 2–3 for TOC; p. 4 general features; pp. 38–65 structural elements; pp. 66–68 annex and conclusion).
