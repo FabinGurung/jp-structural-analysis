@@ -32,7 +32,7 @@ def validate(s:Mapping)->dict:
            "effective_height_mm","unsupported_height_mm","Es_MPa")
  x={k:_finite(s[k],k) for k in required}
  for k,v in x.items():require(v>0,k+" must be positive")
- n=s["bar_count"];require(type(n) is int and n==8,"fixed 8-bar perimeter model only")
+ n=s["bar_count"];require(type(n) is int and n in (8,12),"benchmark supports symmetric 8-bar or 12-bar perimeter only")
  require(x["b_mm"]>2*x["bar_center_cover_mm"] and
          x["D_mm"]>2*x["bar_center_cover_mm"],"bar centres outside section")
  require(x["bar_d_mm"]<2*x["bar_center_cover_mm"],"bar geometry inconsistent")
@@ -47,7 +47,13 @@ def bar_positions(s:Mapping)->list[tuple[float,float]]:
  v=validate(s)
  x=v["b_mm"]/2-v["bar_center_cover_mm"]
  y=v["D_mm"]/2-v["bar_center_cover_mm"]
- return [(-x,-y),(0.,-y),(x,-y),(x,0.),(x,y),(0.,y),(-x,y),(-x,0.)]
+ if v["bar_count"]==8:
+  return [(-x,-y),(0.,-y),(x,-y),(x,0.),(x,y),(0.,y),(-x,y),(-x,0.)]
+ # Twelve symmetric bars: four along top/bottom and two interior on
+ # each vertical face, maintaining exactly 12 unique bar centres.
+ return [(-x,-y),(-x/3,-y),(x/3,-y),(x,-y),
+         (x,-y/3),(x,y/3),(x,y),(x/3,y),
+         (-x/3,y),(-x,y),(-x,y/3),(-x,-y/3)]
 
 def steel_area(s:Mapping)->float:
  v=validate(s)
@@ -79,7 +85,7 @@ def _concrete_stress(epsilon:float,s:Mapping)->float:
 
 @lru_cache(maxsize=80000)
 def _uniaxial_response(b:float,D:float,fck:float,fy:float,bar_d:float,
-                      cover:float,Es:float,c_mm:float,axis:str,n_slices:int=64)->tuple[float,float]:
+                      cover:float,Es:float,c_mm:float,axis:str,n_slices:int=64,bar_count:int=8)->tuple[float,float]:
  """Return axial kN, uniaxial moment kNm for a plane-section curvature.
 
  Uniform concrete fibers across the orthogonal width. Steel forces replace
@@ -88,7 +94,7 @@ def _uniaxial_response(b:float,D:float,fck:float,fy:float,bar_d:float,
  as in the IS456 39.6 load-contour method.
  """
  s={"b_mm":b,"D_mm":D,"fck_MPa":fck,"fy_MPa":fy,
-    "bar_d_mm":bar_d,"bar_count":8,"bar_center_cover_mm":cover,
+    "bar_d_mm":bar_d,"bar_count":bar_count,"bar_center_cover_mm":cover,
     "effective_height_mm":3000.,"unsupported_height_mm":3000.,"Es_MPa":Es}
  require(axis in ("My","Mz"),"unsupported axis")
  depth=D if axis=="My" else b
@@ -120,7 +126,7 @@ def uniaxial_at_pu(p_kN:float,section:Mapping,axis:str)->dict:
  require(p<=pmax,"axial compression beyond Puz reference; reject rather than invent M capacity")
  key=(s["b_mm"],s["D_mm"],s["fck_MPa"],s["fy_MPa"],s["bar_d_mm"],
       s["bar_center_cover_mm"],s["Es_MPa"])
- def response(c):return _uniaxial_response(*key,c,axis)
+ def response(c):return _uniaxial_response(*key,c,axis,bar_count=s["bar_count"])
  lo=.1;hi=1e8
  Plo,_=response(lo);Phi,_=response(hi)
  require(Plo<=p<=Phi+1e-6,"moment capacity not bracketed by section strains")
@@ -135,6 +141,7 @@ def uniaxial_at_pu(p_kN:float,section:Mapping,axis:str)->dict:
  return {"P_reconstructed_kN":force,"neutral_axis_depth_mm":c,
          "M_uniaxial_capacity_approx_kNm":moment,
          "section_method":"1D_64_STRIPS_IS456_39_1A_B_CONDITIONAL_STRAIN_NOT_SP16",
+         "bar_count_used":s["bar_count"],
          "compression_regime":"ALL_COMPRESSED" if c>(s["D_mm"] if axis=="My" else s["b_mm"]) else "TENSION_ZONE",
          "epsilon_max":.0035 if c <= (s["D_mm"] if axis=="My" else s["b_mm"]) else
               .0035/(1+.75*(1-(s["D_mm"] if axis=="My" else s["b_mm"])/c))}
