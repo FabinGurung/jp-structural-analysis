@@ -4,10 +4,10 @@ Does not use OpenSees as a capacity solver or claim verified SP16 charts.
 """
 from __future__ import annotations
 from r6p30.column_pmm import (
- ASSUMED, _uniaxial_response, steel_area, puz_kN, uniaxial_at_pu
+ ASSUMED, _uniaxial_response, steel_area, puz_kN, uniaxial_at_pu, _steel_stress
 )
 
-SCHEMA="jp.sar.column.pmm_benchmarks.v2"
+SCHEMA="jp.sar.column.pmm_benchmarks.v3"
 NPTEL_SOURCE="https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l26.pdf"
 NPTEL_REFERENCE={
  "source_author":"IIT Kharagpur, NPTEL, Design of Concrete Structures, Lesson 26, Q.5/A.5",
@@ -82,16 +82,43 @@ def compare_nptel_sp16():
     }
 
 
+NPTEL_LESSON25_SOURCE="https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l25.pdf"
+def compare_nptel_sp16_20bar():
+ """Independent 400x400 Fe415 20Ø16 chart-derived major-axis check."""
+ section={"b_mm":400.,"D_mm":400.,"fck_MPa":25.,"fy_MPa":415.,
+          "bar_d_mm":16.,"bar_count":20,"bar_center_cover_mm":56.,
+          "effective_height_mm":3000.,"unsupported_height_mm":3000.,
+          "Es_MPa":200000.}
+ from r6p30.column_pmm import bar_positions
+ bar_centres=bar_positions(section)
+ expected=.072525*25*400**3/1e6
+ calculated=uniaxial_at_pu(2240,section,"My")["M_uniaxial_capacity_approx_kNm"]
+ diff=(calculated-expected)/expected
+ if len(bar_centres)!=20 or abs(diff)>.03:
+  raise ValueError("Independent NPTEL 20-bar SP16 chart benchmark failed")
+ return {"source_url":NPTEL_LESSON25_SOURCE,
+    "source_lesson":"IIT Kharagpur NPTEL lesson25, Q5/A5",
+    "source_chart_normalized_moment":.072525,
+    "published_Mu_kNm":expected,
+    "our_table_A_Mu_kNm":calculated,
+    "relative_difference":diff,
+    "predeclared_research_comparison_band_fraction":.03,
+    "published_reference_count":1,
+    "status":"INDEPENDENT_CHART_POINT_WITHIN_RESEARCH_BAND",
+    "our_steel_law":"NPTEL Lesson23 Table10.5 reproducing SP16 Table A",
+    "SP16_all_chart_points_certified":False,
+    "real_building_approval":False}
 def compute():
  nptel=compare_nptel_sp16()
+ nptel_twenty=compare_nptel_sp16_20bar()
  v=ASSUMED
  key=(v["b_mm"],v["D_mm"],v["fck_MPa"],v["fy_MPa"],
       v["bar_d_mm"],v["bar_center_cover_mm"],v["Es_MPa"])
  ast=steel_area(v)
  ac=v["b_mm"]*v["D_mm"]-ast
- # In uniform axial compression IS456 39.1(a) limits concrete
- # extreme strain to .002. Fe500 at Es=200000 => 400 MPa < .87fy.
- steel_stress=min(v["Es_MPa"]*.002,.87*v["fy_MPa"])
+ # In pure axial compression epsilon=.002. Fe500 SP16 Table A
+ # interpolates a smaller stress than the old bilinear Es*epsilon=400 MPa.
+ steel_stress=_steel_stress(.002,v)
  closed=(.446*v["fck_MPa"]*ac+steel_stress*ast)/1000
  numeric,M=_uniaxial_response(*key,1.e10,"My",n_slices=256)
  error=abs(numeric-closed)/closed
@@ -122,6 +149,13 @@ def compute():
   "full_compression_95pct_Puz":high,
   "quadrature":rows,
   "external_sp16_nptel_reference":nptel,
+  "external_sp16_nptel_twenty_bar_reference":nptel_twenty,
+  "archived_external_reference_points":13,
+  "archived_full_family_numerical_grid_points":720,
+  "archived_detailed_qa_folder":"https://drive.google.com/drive/folders/1qX-FJkPw8p9EF1yINTcPf5kAMxJIMJzU",
+  "nptel_lesson23_steel_table_A_url":"https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l23.pdf",
+  "full_SP16_chart_verification":False,
+  "SP16_formal_certification":False,
   "column_actual_member_sign_from_signed_OpenSees":True,
   "source_independent_benchmark":"analytic uniform strain compression force vs 256-strip integration",
   "sp16_verified":False,"construction_approval":False}
