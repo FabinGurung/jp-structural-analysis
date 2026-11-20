@@ -221,7 +221,9 @@ def build(site:Path)->dict:
           "report_page":"example-sar-report.html" if solved_example_present else None,
           "data":"reports/example-sar/example-sar-numbers.json" if solved_example_present else None,
           "original_target_six_chapters":True,
-          "engineering_approval":False},
+          "engineering_approval":False,
+          "r6p31_signed_beam_strength_screens":True,
+          "full_six_component_csv":"reports/example-sar/beam-end-checks.csv"},
       "independent_report_explainer":{"page":"independent-report-guide.html","reading_order":"output→response→model→method→inputs→purpose","educational_only":True},
       "original_report_explainer":{"page":"original-report-guide.html",
             "reading_order":"6→5→4→3→2→1","primary_source":"revised G+1.5 PDF",
@@ -240,7 +242,8 @@ def build(site:Path)->dict:
     if solved_example_present:
         files.extend(["engine-explained.html","example-sar-report.html",
                       "reports/example-sar/example-sar-numbers.json",
-                      "reports/example-sar/receipt.json"])
+                      "reports/example-sar/receipt.json",
+                      "reports/example-sar/beam-end-checks.csv"])
     manifest["files_sha256"]={f:sha(site/f) for f in sorted(files)}
     (site/"portal-manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n",encoding="utf8")
     verify(site)
