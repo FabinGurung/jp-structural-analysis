@@ -294,12 +294,7 @@ force and moment equilibrium. It is a fully synthetic verification benchmark, no
         ("Rigid-in-plane DL maximum vertical displacement",txt(r["max_DL_vertical_disp_mm_rigid"])+" mm","Same source loads, alternative diaphragm assumption"),
         ("Controlling signed frame end moment",txt(r["selected_signed_beam_envelope"]["absolute_kNm"])+" kN·m",e(r["selected_signed_beam_envelope"]["member"]+" · "+r["selected_signed_beam_envelope"]["end"]+" · "+r["selected_signed_beam_envelope"]["component"])),
         ("Control support DL / LL",txt(r["selected_support_DL_Fz_kN"])+" / "+txt(r["selected_support_LL_Fz_kN"])+" kN","Actual fixed-base reactions at "+e(r["selected_support"]))])
-    beamtable=simple_table(("Illustrative element","Numerical result","Basis / caution"),[
-        ("Beam flexure · selected FE end",txt(specimen["Mu_from_signed_synthetic_U_envelope_kNm"])+" kN·m",
-          "Signed 1.2DL + 1.5LL ± HX elastic FE combination"),
-        ("Beam limiting moment",txt(specimen["Mu_lim_singly_reinforced_kNm"])+" kN·m","0.133 fck b d²; M25, 300mm width, d405mm"),
-        ("Beam flexural steel required",txt(specimen["As_required_by_simplified_flexure_mm2"])+" mm²" if specimen["As_required_by_simplified_flexure_mm2"] is not None else "Exceeds singly reinforced limit",
-          "Simplified rectangular stress block, one selected end, no detailing check"),
+    beamtable=simple_table(("Other illustrative element","Numerical result","Basis / caution"),[
         ("Column axial action",txt(col["axial_envelope_kN"])+" kN","Signed selected FE column-end envelope"),
         ("Column gross nominal stress",txt(col["nominal_axial_stress_MPa"])+" MPa","Not P–M–M interaction or axial resistance verification"),
         ("Slab hypothetical one-way strip",txt(slab["hypothetical_oneway_4m_strip_Mu_kNm_per_m"])+" kN·m/m","4 m simply supported 1m strip; NOT the two-way FE shell moment"),
@@ -317,7 +312,7 @@ OpenSeesPy assembles <a href="{OPENSEES}">ShellMITC4</a> and elasticBeamColumn o
 Two diaphragm cases are solved separately: <code>FLEXIBLE_SHELL</code> and <code>RIGID_INPLANE_MPC</code>.
 For every case, signed support forces and free-body force/moment equilibrium are tested.
 The illustrative U± envelope is a linear combination of the <em>same</em> solved model's DL, LL and HX end actions.</p>
-<p>Design illustration: a separately specified M25/Fe500 stress block is used for a beam end and
+<p>The reusable IS456 beam screen calculates same-case My/Vz member-end flexure and vertical shear for every synthetic beam; an additional separate M25/Fe500 stress block is used for a simple strip and
 a hypothetical simply-supported slab strip, while a trial assumed footing is checked for gross gravity bearing.
 These Chapter 6 computations are <b>not</b> FE shell capacity design nor governing NBC/IS detailed design.</p>"""),
        ("model","4.0 Modeling in OpenSeesPy",f"""<p>Actual source fixture: 4 m × 4 m plan at z=0,3,6 m; 16 m² first floor
@@ -332,11 +327,7 @@ This is not a seismic response-spectrum or nonlinear plastic hinge model.</p>"""
 <h3>What the source ETABS report additionally contains</h3>
 <p>Model mass participation, seismic base shear, mode shapes, drift, torsional irregularity, soft-storey and load-combination checks. Those quantities are not generated for this synthetic HX reference case, so they are not printed as fake zeroes.</p>"""),
        ("design","6.0 Design of Structural Elements",beam_detail+beamtable+f"""<h3>6.3 Other illustrative member arithmetic</h3>
-<p><b>Beam:</b> M<sub>u</sub> comes from a <em>real</em> signed FE end-force envelope at
-{e(r["selected_signed_beam_envelope"]["member"])}. Flexure example uses
-M<sub>u</sub> = 0.87 f<sub>y</sub> A<sub>st</sub> (d − 0.42x<sub>u</sub>)
-with x<sub>u</sub> = 0.87 f<sub>y</sub> A<sub>st</sub>/(0.36 f<sub>ck</sub> b);
-f<sub>ck</sub>=25 MPa, f<sub>y</sub>=500 MPa, b=300mm, d=405mm.</p>
+<p><b>Beam:</b> the independent full-envelope My/Vz beam strength screens and formulas are in Section 6.1; the remaining column/slab/footing/stair checks below are still illustrative.</p>
 <p><b>Slab:</b> 1 m simply supported <em>teaching strip</em> assumes w<sub>u</sub>=
 1.2×(0.12×25+1.5)+1.5×2 = {txt(slab["hypothetical_oneway_strip_factor_load_kPa"])} kPa;
 M<sub>u</sub>=w<sub>u</sub>L²/8 at L=4m. The actual solved two-way shell distribution is
