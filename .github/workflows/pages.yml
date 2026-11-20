@@ -69,6 +69,12 @@ jobs:
               result=json.loads(get("data/report-results.json"))
               assert receipt["beam_rows"]==256 and receipt["column_rows"]==64
               assert result["column_pmm_checks"]["row_count"]==64
+              assert result["column_pmm_checks"]["axial_tension_rows_excluded"]==0
+              assert all(x["compression_signed_kN"]>0
+                  for x in result["column_pmm_checks"]["rows"])
+              assert result["column_capacity_verification"]["relative_pure_axial_error"]<.001
+              assert result["column_capacity_verification"]["sp16_verified"] is False
+              assert json.loads(get("data/column-verification.json"))["construction_approval"] is False
               assert result["beam_checks"]["rows_count"]==256
               assert not result["original_project_engineering_approval"]
               assert result["original_narayani_F3_NOT_SAFE"]
