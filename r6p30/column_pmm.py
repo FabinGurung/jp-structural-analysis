@@ -12,7 +12,7 @@ import math
 from functools import lru_cache
 from typing import Mapping
 
-SCHEMA="jp.sar.r6p33.column_pmm_sign_strain_benchmark.v1"
+SCHEMA="jp.sar.r6p35.column_pmm_table_a_benchmark.v1"
 REFERENCE="https://wriddodoti.gov.np/uploads/blog/20230331071217_IS-456-with-all-ammendments.pdf"
 ASSUMED={"b_mm":400.0,"D_mm":400.0,"fck_MPa":25.0,"fy_MPa":500.0,
          "bar_d_mm":16.0,"bar_count":8,"bar_center_cover_mm":50.0,
@@ -32,11 +32,11 @@ def validate(s:Mapping)->dict:
            "effective_height_mm","unsupported_height_mm","Es_MPa")
  x={k:_finite(s[k],k) for k in required}
  for k,v in x.items():require(v>0,k+" must be positive")
- n=s["bar_count"];require(type(n) is int and n in (8,12),"benchmark supports symmetric 8-bar or 12-bar perimeter only")
+ n=s["bar_count"];require(type(n) is int and n in (8,12,20),"benchmark supports 8-, 12- or 20-bar symmetric perimeter layouts")
  require(x["b_mm"]>2*x["bar_center_cover_mm"] and
          x["D_mm"]>2*x["bar_center_cover_mm"],"bar centres outside section")
  require(x["bar_d_mm"]<2*x["bar_center_cover_mm"],"bar geometry inconsistent")
- require(x["fy_MPa"] in (415,500),"only Fe415/Fe500 prototype tested")
+ require(x["fy_MPa"] in (250,415,500),"only Fe250, Fe415, Fe500 grade tables are supported")
  require(x["effective_height_mm"]/x["b_mm"]<12 and x["effective_height_mm"]/x["D_mm"]<12,
          "slender column requires second-order effects, not this short-column screen")
  require(.008<=n*math.pi*x["bar_d_mm"]**2/(4*x["b_mm"]*x["D_mm"])<=.06,
@@ -49,11 +49,21 @@ def bar_positions(s:Mapping)->list[tuple[float,float]]:
  y=v["D_mm"]/2-v["bar_center_cover_mm"]
  if v["bar_count"]==8:
   return [(-x,-y),(0.,-y),(x,-y),(x,0.),(x,y),(0.,y),(-x,y),(-x,0.)]
- # Twelve symmetric bars: four along top/bottom and two interior on
- # each vertical face, maintaining exactly 12 unique bar centres.
- return [(-x,-y),(-x/3,-y),(x/3,-y),(x,-y),
-         (x,-y/3),(x,y/3),(x,y),(x/3,y),
-         (-x/3,y),(-x,y),(-x,y/3),(-x,-y/3)]
+ # Four-edge symmetric layouts, corners counted once (12: 4 per side;
+ # 20: 6 per side). Still hypothetical positions, not approved bar cage.
+ count=v["bar_count"];number_on_edge=count//4+1
+ corners=[]
+ for i in range(number_on_edge):
+  corners.append((-x+2*x*i/(number_on_edge-1),-y))
+ for i in range(1,number_on_edge):
+  corners.append((x,-y+2*y*i/(number_on_edge-1)))
+ for i in range(1,number_on_edge):
+  corners.append((x-2*x*i/(number_on_edge-1),y))
+ for i in range(1,number_on_edge-1):
+  corners.append((-x,y-2*y*i/(number_on_edge-1)))
+ require(len(corners)==count and len(set(corners))==count,
+         "symmetric four-edge cage geometry missing or duplicated")
+ return corners
 
 def steel_area(s:Mapping)->float:
  v=validate(s)
@@ -73,8 +83,30 @@ def alpha_n(p_kN:float,puz:float)->float:
  if ratio>=.8:return 2.0
  return 1+(ratio-.2)/.6
 
+# Stress-strain ordinates reproduced by IIT Kharagpur NPTEL Lesson 23,
+# Table 10.5 from SP16 Table A; the reference steel curve is NOT the
+# former elastic-perfectly-plastic surrogate (which fails 20-bar benchmark).
+# Source: https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l23.pdf
+SP16_TABLE_A_STRESS={
+ 250: ((0.,0.),(.0010875,217.5),(.006,217.5)),
+ 415: ((0.,0.),(.00144,288.7),(.00163,306.7),(.00192,324.8),
+       (.00241,342.8),(.00276,351.8),(.0038,360.9),(.005,361.05)),
+ 500: ((0.,0.),(.00174,347.8),(.00195,369.6),(.00226,391.3),
+       (.00277,413.),(.00312,423.9),(.00417,434.8),(.006,435.)),
+}
 def _steel_stress(epsilon:float,s:Mapping)->float:
- return max(-.87*s["fy_MPa"],min(.87*s["fy_MPa"],s["Es_MPa"]*epsilon))
+ e=_finite(epsilon,"steel strain")
+ fy=int(s["fy_MPa"])
+ require(fy in SP16_TABLE_A_STRESS,"SP16 Table A research curve only Fe250/415/500")
+ value=abs(e)
+ knots=SP16_TABLE_A_STRESS[fy]
+ if value>=knots[-1][0]:return math.copysign(.87*fy,e)
+ for i in range(1,len(knots)):
+  start,stress=knots[i-1];finish,finish_stress=knots[i]
+  if value<=finish:
+   calculated=stress+(finish_stress-stress)*(value-start)/(finish-start)
+   return math.copysign(min(calculated,.87*fy),e)
+ raise AssertionError("steel curve bracket error")
 
 def _concrete_stress(epsilon:float,s:Mapping)->float:
  """Simplified IS456 design parabola-rectangle, compression positive."""
