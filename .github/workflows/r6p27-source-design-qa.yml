@@ -55,7 +55,7 @@ jobs:
           PY
       - name: Independently solve R6.23 synthetic frame shell and verify six-chapter engine report generator
         run: |
-          python -m pytest -q portal/test_engine_atlas.py
+          python -m pytest -q portal/test_engine_atlas.py r6p30/test_beam_design.py
       - name: Write exact reported-source column steel ratio, G1 concrete delta and trial support mapping
         run: |
           python - <<'PY'
