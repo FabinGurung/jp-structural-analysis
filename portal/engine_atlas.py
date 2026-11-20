@@ -8,6 +8,7 @@ from hashlib import sha256
 from html import escape as e
 import json,math
 from pathlib import Path
+from r6p30.beam_design import member_checks_from_preview, CASES as BEAM_CASE_FACTORS
 
 ORIGINAL="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
 REPO="https://github.com/FabinGurung/jp-structural-analysis"
@@ -59,6 +60,13 @@ def load_source(site):
 
 def summarize(site):
     data,source_file_sha,fixture=load_source(site)
+    # Use precisely the fixture's declared signed combination factors.
+    fixture_combos={row["id"]:row["factors"] for row in fixture["combinations"]}
+    need(fixture_combos==BEAM_CASE_FACTORS,
+         "assumed original source combo does not match beam-design code")
+    beam_rc=member_checks_from_preview(data)
+    need(beam_rc["source_fixture_sha256"]==data["source_SHA256"],
+         "R6.31 actual OpenSees source digest mismatch")
     mode="FLEXIBLE_SHELL"
     raw=data["solutions"][mode]
     beam_ids={q["key"] for q in data["topology"]["beams"]}
@@ -75,8 +83,9 @@ def summarize(site):
     chosen=max(metric,key=lambda x:x["absolute_kNm"])
     need(chosen["member"] in col_ids or chosen["member"] in beam_ids,"selected frame member missing")
     for row in metric: need(math.isfinite(row["signed_kNm"]),"non-finite signed FE action")
-    beam_design=flexural_steel(chosen["absolute_kNm"],300,405)
-    steel_min=0.85*300*405/500
+    beam_governor=beam_rc["governing_bending_row"]
+    beam_design=beam_governor["flexure"]
+    steel_min=beam_design["As_min_mm2"]
     column_envelope=[]
     for col in sorted(col_ids):
         for end in ("I","J"):
@@ -145,12 +154,18 @@ def summarize(site):
         "selected_support_source":"elastic fixed-base reaction, not soil bearing stress"
       },
       "sample_member_arithmetic":{
-        "beam":{"Mu_from_signed_synthetic_U_envelope_kNm":chosen["absolute_kNm"],
+        "beam":{"Mu_from_signed_synthetic_U_envelope_kNm":beam_governor["flexure"]["Mu_abs_kNm"],
+                "beam_member":beam_governor["member"],
+                "beam_end":beam_governor["end"],
+                "beam_combo":beam_governor["case"],
+                "beam_mode":beam_governor["mode"],
                 "width_mm":300,"effective_d_mm":405,"fck_MPa":25,"fy_MPa":500,
                 "Mu_lim_singly_reinforced_kNm":beam_design["Mu_lim_kNm"],
-                "As_required_by_simplified_flexure_mm2":beam_design["As_req_mm2"],
+                "As_required_by_simplified_flexure_mm2":beam_design["As_req_flexure_mm2"],
+                "As_provided_assumed_3_16mm_mm2":beam_design["As_provided_tension_mm2"],
+                "Mu_res_provided_kNm":beam_design["Mu_res_provided_kNm"],
                 "As_min_IS456_demonstration_mm2":steel_min,
-                "design_scope":"single rectangular flexure only; no shear/joint/torsion/detailing"},
+                "design_scope":"R6.31 reusable My/Vz same-case beam end screens; no torsion/joint/ductile detailing"},
         "column":{"member":critical_col[1],"axial_envelope_kN":abs(critical_col[3]),
                   "gross_area_mm2":400*400,
                   "nominal_axial_stress_MPa":abs(critical_col[3])*1000/(400*400),
@@ -177,6 +192,7 @@ def summarize(site):
                      "computed_run_m":17*.27,
                      "design_scope":"geometry-only; absent from original synthetic FE example"}
       },
+      "beam_rc_screens_R6p31":beam_rc,
       "professional_approval":False,"construction_release":False,
       "code_compliant_building_design":False,
       "original_f3_not_safe_retained":True,
