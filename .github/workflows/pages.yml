@@ -862,7 +862,7 @@ jobs:
           PY
       - name: Reproduce real FE example report from R6.23 source and verify its design arithmetic
         run: |
-          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_engine_atlas.py
+          PYTHONPATH=r6p23-main python -m pytest -q r6p23-main/portal/test_engine_atlas.py r6p23-main/r6p30/test_beam_design.py
           test -f site/data/r6p23-preview.json
       - name: Apply four-section Home / Studio / Projects / More portal without deleting historical outputs
         run: |
@@ -878,6 +878,7 @@ jobs:
           test -f site/engine-explained.html
           test -f site/example-sar-report.html
           test -f site/reports/example-sar/example-sar-numbers.json
+          test -f site/reports/example-sar/beam-end-checks.csv
           test -f site/reports/example-sar/receipt.json
           test -f site/original-report-guide.html
           test -f site/independent-report-guide.html
@@ -1046,7 +1047,7 @@ jobs:
                   print("Waiting for portal CDN revision",attempt+1,str(err)[:220])
                   time.sleep(10)
           PY
-      - name: Verify live R6.30 actual OpenSees example, original chapter format and full engine inventory
+      - name: Verify live R6.31 source-conditioned 256 beam flexure/shear checks and report original format
         run: |
           python - <<'PY'
           import hashlib,json,os,time,urllib.request
@@ -1070,6 +1071,13 @@ jobs:
                   assert result["topology"]["shell_elements"]==31
                   assert result["FE_results"]["max_six_axis_equilibrium_residual"]<1e-3
                   assert result["FE_is_really_computed"] is True
+                  beam=result["beam_rc_screens_R6p31"]
+                  assert beam["beam_count"]==32 and beam["rows_count"]==256
+                  assert beam["source_fixture_sha256"]==original["source_SHA256"]
+                  assert len(beam["all_qualifying_beam_end_case_rows"])==256
+                  assert not beam["professional_engineering_approval"]
+                  assert not beam["member_design_complete"]
+                  assert beam["original_narayani_F3_NOT_SAFE_retained"] is True
                   assert result["original_f3_not_safe_retained"] is True
                   assert result["professional_approval"] is False
                   assert result["construction_release"] is False
@@ -1079,6 +1087,9 @@ jobs:
                   atlas=get("engine-explained.html",n).decode()
                   assert all(str(i)+".0 " in rep for i in range(1,7))
                   assert "339.000" in rep and "62.000" in rep
+                  csv=get("reports/example-sar/beam-end-checks.csv",n).decode()
+                  assert len(csv.splitlines())==257
+                  assert "My_kNm" in csv.splitlines()[0] and "Vz_kN" in csv.splitlines()[0]
                   assert "R6.23" in atlas and "R6.28" in atlas
                   assert "What our structural engines actually do" in atlas
                   assert 'href="engine-explained.html"' in get("more.html",n).decode()

@@ -6,8 +6,10 @@ It NEVER calls the Narayani project results an engineer-approved structure.
 from __future__ import annotations
 from hashlib import sha256
 from html import escape as e
-import json,math
+import json,math,csv
 from pathlib import Path
+from r6p30.beam_design import member_checks_from_preview, CASES as BEAM_CASE_FACTORS
+from r6p30.report_beam_html import render_beam_chapter
 
 ORIGINAL="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
 REPO="https://github.com/FabinGurung/jp-structural-analysis"
@@ -59,6 +61,13 @@ def load_source(site):
 
 def summarize(site):
     data,source_file_sha,fixture=load_source(site)
+    # Use precisely the fixture's declared signed combination factors.
+    fixture_combos={row["id"]:row["factors"] for row in fixture["combinations"]}
+    need(fixture_combos==BEAM_CASE_FACTORS,
+         "assumed original source combo does not match beam-design code")
+    beam_rc=member_checks_from_preview(data)
+    need(beam_rc["source_fixture_sha256"]==data["source_SHA256"],
+         "R6.31 actual OpenSees source digest mismatch")
     mode="FLEXIBLE_SHELL"
     raw=data["solutions"][mode]
     beam_ids={q["key"] for q in data["topology"]["beams"]}
@@ -75,8 +84,9 @@ def summarize(site):
     chosen=max(metric,key=lambda x:x["absolute_kNm"])
     need(chosen["member"] in col_ids or chosen["member"] in beam_ids,"selected frame member missing")
     for row in metric: need(math.isfinite(row["signed_kNm"]),"non-finite signed FE action")
-    beam_design=flexural_steel(chosen["absolute_kNm"],300,405)
-    steel_min=0.85*300*405/500
+    beam_governor=beam_rc["governing_bending_row"]
+    beam_design=beam_governor["flexure"]
+    steel_min=beam_design["As_min_mm2"]
     column_envelope=[]
     for col in sorted(col_ids):
         for end in ("I","J"):
@@ -145,12 +155,18 @@ def summarize(site):
         "selected_support_source":"elastic fixed-base reaction, not soil bearing stress"
       },
       "sample_member_arithmetic":{
-        "beam":{"Mu_from_signed_synthetic_U_envelope_kNm":chosen["absolute_kNm"],
+        "beam":{"Mu_from_signed_synthetic_U_envelope_kNm":beam_governor["flexure"]["Mu_abs_kNm"],
+                "beam_member":beam_governor["member"],
+                "beam_end":beam_governor["end"],
+                "beam_combo":beam_governor["case"],
+                "beam_mode":beam_governor["mode"],
                 "width_mm":300,"effective_d_mm":405,"fck_MPa":25,"fy_MPa":500,
                 "Mu_lim_singly_reinforced_kNm":beam_design["Mu_lim_kNm"],
-                "As_required_by_simplified_flexure_mm2":beam_design["As_req_mm2"],
+                "As_required_by_simplified_flexure_mm2":beam_design["As_req_flexure_mm2"],
+                "As_provided_assumed_3_16mm_mm2":beam_design["As_provided_tension_mm2"],
+                "Mu_res_provided_kNm":beam_design["Mu_res_provided_kNm"],
                 "As_min_IS456_demonstration_mm2":steel_min,
-                "design_scope":"single rectangular flexure only; no shear/joint/torsion/detailing"},
+                "design_scope":"R6.31 reusable My/Vz same-case beam end screens; no torsion/joint/ductile detailing"},
         "column":{"member":critical_col[1],"axial_envelope_kN":abs(critical_col[3]),
                   "gross_area_mm2":400*400,
                   "nominal_axial_stress_MPa":abs(critical_col[3])*1000/(400*400),
@@ -177,6 +193,7 @@ def summarize(site):
                      "computed_run_m":17*.27,
                      "design_scope":"geometry-only; absent from original synthetic FE example"}
       },
+      "beam_rc_screens_R6p31":beam_rc,
       "professional_approval":False,"construction_release":False,
       "code_compliant_building_design":False,
       "original_f3_not_safe_retained":True,
@@ -237,6 +254,7 @@ def example_report(d):
     a=d["assumptions"];top=d["topology"];r=d["FE_results"];s=d["sample_member_arithmetic"];loads=d["loads_kN"]
     txt=lambda x:e(money(x,3))
     specimen=s["beam"];slab=s["slab"];foot=s["footing"];col=s["column"]
+    beam_detail=render_beam_chapter(d["beam_rc_screens_R6p31"])
     overview=f"""<p>Learning model: a <b>completely hypothetical two-floor reinforced-concrete frame and slab demonstration</b>.
 This PDF-style report follows the six numbered chapters of the <a href="{ORIGINAL}">original ETABS report</a> without copying its result values.
 All frame and shell reactions in Chapter 5 come from the already executed <code>r6p23.engine.build()</code>
@@ -276,12 +294,7 @@ force and moment equilibrium. It is a fully synthetic verification benchmark, no
         ("Rigid-in-plane DL maximum vertical displacement",txt(r["max_DL_vertical_disp_mm_rigid"])+" mm","Same source loads, alternative diaphragm assumption"),
         ("Controlling signed frame end moment",txt(r["selected_signed_beam_envelope"]["absolute_kNm"])+" kN·m",e(r["selected_signed_beam_envelope"]["member"]+" · "+r["selected_signed_beam_envelope"]["end"]+" · "+r["selected_signed_beam_envelope"]["component"])),
         ("Control support DL / LL",txt(r["selected_support_DL_Fz_kN"])+" / "+txt(r["selected_support_LL_Fz_kN"])+" kN","Actual fixed-base reactions at "+e(r["selected_support"]))])
-    beamtable=simple_table(("Illustrative element","Numerical result","Basis / caution"),[
-        ("Beam flexure · selected FE end",txt(specimen["Mu_from_signed_synthetic_U_envelope_kNm"])+" kN·m",
-          "Signed 1.2DL + 1.5LL ± HX elastic FE combination"),
-        ("Beam limiting moment",txt(specimen["Mu_lim_singly_reinforced_kNm"])+" kN·m","0.133 fck b d²; M25, 300mm width, d405mm"),
-        ("Beam flexural steel required",txt(specimen["As_required_by_simplified_flexure_mm2"])+" mm²" if specimen["As_required_by_simplified_flexure_mm2"] is not None else "Exceeds singly reinforced limit",
-          "Simplified rectangular stress block, one selected end, no detailing check"),
+    beamtable=simple_table(("Other illustrative element","Numerical result","Basis / caution"),[
         ("Column axial action",txt(col["axial_envelope_kN"])+" kN","Signed selected FE column-end envelope"),
         ("Column gross nominal stress",txt(col["nominal_axial_stress_MPa"])+" MPa","Not P–M–M interaction or axial resistance verification"),
         ("Slab hypothetical one-way strip",txt(slab["hypothetical_oneway_4m_strip_Mu_kNm_per_m"])+" kN·m/m","4 m simply supported 1m strip; NOT the two-way FE shell moment"),
@@ -299,7 +312,7 @@ OpenSeesPy assembles <a href="{OPENSEES}">ShellMITC4</a> and elasticBeamColumn o
 Two diaphragm cases are solved separately: <code>FLEXIBLE_SHELL</code> and <code>RIGID_INPLANE_MPC</code>.
 For every case, signed support forces and free-body force/moment equilibrium are tested.
 The illustrative U± envelope is a linear combination of the <em>same</em> solved model's DL, LL and HX end actions.</p>
-<p>Design illustration: a separately specified M25/Fe500 stress block is used for a beam end and
+<p>The reusable IS456 beam screen calculates same-case My/Vz member-end flexure and vertical shear for every synthetic beam; an additional separate M25/Fe500 stress block is used for a simple strip and
 a hypothetical simply-supported slab strip, while a trial assumed footing is checked for gross gravity bearing.
 These Chapter 6 computations are <b>not</b> FE shell capacity design nor governing NBC/IS detailed design.</p>"""),
        ("model","4.0 Modeling in OpenSeesPy",f"""<p>Actual source fixture: 4 m × 4 m plan at z=0,3,6 m; 16 m² first floor
@@ -313,12 +326,8 @@ This is not a seismic response-spectrum or nonlinear plastic hinge model.</p>"""
        ("results","5.0 Design Output and Structural Checks",modetable+"""<div class="ok"><b>Numerical verification:</b> signed force/moment equilibrium passes for both diaphragm alternatives and all published cases. This demonstrates a working OpenSees numerical model. It is not a seismic compliance check.</div>
 <h3>What the source ETABS report additionally contains</h3>
 <p>Model mass participation, seismic base shear, mode shapes, drift, torsional irregularity, soft-storey and load-combination checks. Those quantities are not generated for this synthetic HX reference case, so they are not printed as fake zeroes.</p>"""),
-       ("design","6.0 Design of Structural Elements",beamtable+f"""<h3>How the arithmetic was obtained</h3>
-<p><b>Beam:</b> M<sub>u</sub> comes from a <em>real</em> signed FE end-force envelope at
-{e(r["selected_signed_beam_envelope"]["member"])}. Flexure example uses
-M<sub>u</sub> = 0.87 f<sub>y</sub> A<sub>st</sub> (d − 0.42x<sub>u</sub>)
-with x<sub>u</sub> = 0.87 f<sub>y</sub> A<sub>st</sub>/(0.36 f<sub>ck</sub> b);
-f<sub>ck</sub>=25 MPa, f<sub>y</sub>=500 MPa, b=300mm, d=405mm.</p>
+       ("design","6.0 Design of Structural Elements",beam_detail+beamtable+f"""<h3>6.3 Other illustrative member arithmetic</h3>
+<p><b>Beam:</b> the independent full-envelope My/Vz beam strength screens and formulas are in Section 6.1; the remaining column/slab/footing/stair checks below are still illustrative.</p>
 <p><b>Slab:</b> 1 m simply supported <em>teaching strip</em> assumes w<sub>u</sub>=
 1.2×(0.12×25+1.5)+1.5×2 = {txt(slab["hypothetical_oneway_strip_factor_load_kPa"])} kPa;
 M<sub>u</sub>=w<sub>u</sub>L²/8 at L=4m. The actual solved two-way shell distribution is
@@ -326,7 +335,7 @@ different. <b>Footing:</b> gross q=[R<sub>DL</sub>+R<sub>LL</sub>+footing weight
 and trial V<sub>u</sub>=q<sub>u</sub> B(a−d) for a centred column.
 The footing and stair geometry do not exist in the OpenSees benchmark.</p>
 <div class="wire"><b>Not an issued structural design:</b> no reliable code-based seismic action
-combination, P–M–M interaction, shear reinforcement, ductile joints, two-way slab detailing,
+combination, P–M–M interaction, actual torsion/other-axis beam design, ductile joints, two-way slab detailing,
 soil springs, footing punching and eccentricity, staircase structural moments, or full schedule
 has been passed or certified. These are the exact future calculation modules to connect,
 not failures of the present completed shell/frame solver.</div>"""),
@@ -334,7 +343,7 @@ not failures of the present completed shell/frame solver.</div>"""),
 <a href="{REPO}/blob/main/r6p23/runner.py">r6p23/runner.py reference_fixture()</a>,
 <a href="{REPO}/blob/main/r6p23/engine.py">r6p23/engine.py build()</a>.
 Published solved model: <a href="data/r6p23-preview.json">OpenSees source/result JSON</a>.
-This educational report: <a href="reports/example-sar/example-sar-numbers.json">machine-readable calculations</a>.
+This educational report: <a href="reports/example-sar/example-sar-numbers.json">machine-readable calculations</a> and <a href="reports/example-sar/beam-end-checks.csv">complete beam-end strength screens (CSV)</a>.
 All FE numbers originate from the checksum-matched source fixture and GitHub Actions execution.</p>
 <p>Original report whose <i>organization</i> is followed: <a href="{ORIGINAL}">new nbc2025 report REVISED(1).pdf</a>
 (pp. 2–3 for TOC; p. 4 general features; pp. 38–65 structural elements; pp. 66–68 annex and conclusion).
@@ -370,6 +379,9 @@ def inventory_report(d):
       ("R6.28 — F3 shear verifier",repo("r6p27/f3_oneway_verification.py"),
        "Original worksheet pressure reproduced; shear effective-depth and IS456 stress comparisons independently recalculated; machine-verifiable release",
        "Does not physically approve source F3 footing; original NOT SAFE verdict retained"),
+      ("R6.31 — synthetic beam design checks",repo("r6p30/beam_design.py")+" + "+repo("r6p30/report_beam_html.py"),
+       "Actual source-hashed R6.23 two-mode OpenSees signed member-end My/Vz pairs → 256 reusable IS456 beam flexure+vertical-shear section checks, assumed steel and 256-row CSV",
+       "No beam-end-to-support-face design action reduction, torsion, Mz/Vy, NBC seismic/IS13920 ductile/joint/detailing; not a Narayani structural design"),
       ("Portal/UI",repo("portal/build.py")+" + "+repo("portal/learning_system.py"),
        "Four-section public website; both backwards-reading guides, indexed original-versus-our-product comparison, reports and SHA provenance",
        "Not a structural solver, and a website QA pass does not prove design safety")])
@@ -379,7 +391,7 @@ def inventory_report(d):
       ("3.0 Analysis / design procedure","ETABS frame modelling, response-spectrum method, SAFE and spreadsheet checks","OpenSees linear elastic frame and ShellMITC4, conditional combinations, explicit reproducibility","Validated response-spectrum/seismic design, wind, P–Δ and member/foundation design algorithms"),
       ("4.0 Modeling","3D ETABS frame, floor layouts, assignments and actual connection assumptions","R6.23 regular synthetic shared-node shells; R6.26 actual GF coords + assumed upper storeys / beam joints","Construct verified physical model of irregular building, real walls, diaphragm and boundary restraints"),
       ("5.0 Structural output","Base shear, mass participation, displacement, drift, torsion/soft-storey, member-end forces","Actual signed OpenSees forces and base reactions, 6-axis balance; diaphragm comparisons in synthetic example","Verified site-specific modal/seismic/ULS/SLS outputs and direct source action comparison"),
-      ("6.0 Element design","Columns, beam reinforcement, slabs, isolated+combined footings, staircase and schedules","Drawing quantity/steel arithmetic; F3 shear review; a bounded hypothetical beam/slab/footing teaching example","Reusable, tested code-compliant beam/column/slab/foundation/stair checks and signed schedules"),
+      ("6.0 Element design","Columns, beam reinforcement, slabs, isolated+combined footings, staircase and schedules","New R6.31 reusable IS456 beam My/Vz flexure/shear screens for all 256 signed synthetic FE end cases; R6.27 quantities, R6.28 F3 review; other example elements are separate teaching arithmetic","Add beam torsion/other-axis/critical sections and source-specific load envelopes; then independently test columns, slabs, foundations, stairs and ductile detailing"),
       ("Annex, references","P–M–M figures, capacity ratios, report conclusions and codes","Source SHA/JSON/CSV, test results, one reproducible report and printable example","Traceable user-reviewed report generation, full detail sheets and engineer's issue/approval workflow")])
     sections=[
       ("answer","01 — Product status in one paragraph",f"""<p><strong>We have working numerical OpenSees engines and a report skeleton, not a finished whole-building structural design generator.</strong>
@@ -437,12 +449,35 @@ def build(site:Path):
     folder=site/"reports/example-sar";folder.mkdir(parents=True,exist_ok=True)
     raw=folder/"example-sar-numbers.json"
     raw.write_text(json.dumps(d,indent=2,sort_keys=True,ensure_ascii=False,allow_nan=False)+"\n",encoding="utf8")
+    # Human-auditable 256-row evidence export: retain all six signed components,
+    # section dimensions and independently calculated strength classifications.
+    r=d["beam_rc_screens_R6p31"]
+    beamcsv=folder/"beam-end-checks.csv"
+    headers=("diaphragm","case","member","end","N_kN","Vy_kN","Vz_kN",
+             "T_kNm","My_kNm","Mz_kNm","Mu_required_kNm","As_required_mm2",
+             "As_assumed_mm2","Mu_resistance_kNm","Vu_required_kN",
+             "tau_v_MPa","tau_c_MPa","tau_cmax_MPa",
+             "provided_stirrup_spacing_mm","max_allowable_stirrup_spacing_mm",
+             "flexure_section_check","shear_section_check","professional_approval")
+    with beamcsv.open("w",encoding="utf8",newline="") as stream:
+        writer=csv.writer(stream)
+        writer.writerow(headers)
+        for row in r["all_qualifying_beam_end_case_rows"]:
+            a=row["signed_local_actions"]
+            f=row["flexure"];v=row["shear"]
+            writer.writerow((row["mode"],row["case"],row["member"],row["end"],
+              *(a[key] for key in ("N","Vy","Vz","T","My","Mz")),
+              f["Mu_abs_kNm"],f["As_required_including_min_mm2"],
+              f["As_provided_tension_mm2"],f["Mu_res_provided_kNm"],
+              v["Vu_abs_kN"],v["tau_v_MPa"],v["tau_c_MPa"],v["tau_cmax_MPa"],
+              v["stirrup_spacing_provided_mm"],v["stirrup_s_upper_bound_mm"],
+              f["status"],v["status"],False))
     receipt={"schema":"jp.sar.example_engine_atlas_receipt.v1",
              "example_source_preview_sha256":d["source_preview_sha256"],
              "model_source_SHA256":d["source_fixture_sha256"],
              "engineering_approval":False,"files_sha256":{
                 name:sha256((site/name).read_bytes()).hexdigest() for name in
-                ("engine-explained.html","example-sar-report.html","reports/example-sar/example-sar-numbers.json")}}
+                ("engine-explained.html","example-sar-report.html","reports/example-sar/example-sar-numbers.json","reports/example-sar/beam-end-checks.csv")}}
     (folder/"receipt.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n",encoding="utf8")
     verify(site)
     return receipt
@@ -462,6 +497,22 @@ def verify(site:Path):
     for name,h in q["files_sha256"].items():
         need(sha256((site/name).read_bytes()).hexdigest()==h,
              "generated HTML/JSON SHA drift "+name)
+    beam=data["beam_rc_screens_R6p31"]
+    need(beam["schema"]=="jp.sar.r6p31.is456_synthetic_beam_strength_screens.v1",
+         "beam module missing or wrong schema")
+    need(beam["source_fixture_sha256"]==data["source_fixture_sha256"],
+         "beam checks not derived from real FE input digest")
+    need(beam["rows_count"]==beam["beam_count"]*2*2*2 and beam["beam_count"]==32,
+         "complete R6.23 signed beam-end coverage lost")
+    need(beam["professional_engineering_approval"] is False and
+         beam["member_design_complete"] is False and
+         beam["original_narayani_F3_NOT_SAFE_retained"],
+         "beam isolated-check success cannot imply construction approval")
+    with (folder/"beam-end-checks.csv").open(encoding="utf8",newline="") as fp:
+        table=list(csv.DictReader(fp))
+    need(len(table)==beam["rows_count"],"source-signed CSV end-count mismatch")
+    need(set(("My_kNm","Vz_kN","T_kNm","As_required_mm2","tau_c_MPa"))<=set(table[0]),
+         "beam action/resistance CSV column evidence missing")
     h=(site/"example-sar-report.html").read_text()
     for term in ("1.0 Introduction","2.0 General Data for Structural Analysis",
                  "3.0 Analysis and Design Procedure","4.0 Modeling in OpenSeesPy",

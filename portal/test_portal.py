@@ -102,6 +102,8 @@ def test_source_safety_hold_and_release_not_misclassified(site):
     assert "engineer" in research.lower()
     assert "independent-report-guide.html" in research
     assert "engine-explained.html" in research
+    assert "R6.31 beam flexure/shear" in research
+    assert "256" in research
     assert "example-sar-report.html" in research
     m=json.loads((site/"portal-manifest.json").read_text())
     assert m["frozen_engine_software_sha"]=="1d6394d1d871b070d17f056b6eec4c74efdfb3af"
