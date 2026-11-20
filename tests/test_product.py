@@ -26,6 +26,18 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert data["column_pmm_checks"]["axial_tension_rows_excluded"]==0
   assert data["column_pmm_checks"]["local_column_I_J_force_sign_reviewed_on_fixture"]
   assert data["column_capacity_verification"]["relative_pure_axial_error"]<.001
+  ext=data["column_capacity_verification"]["external_sp16_nptel_reference"]
+  assert ext["reference_major_M_kNm"]==246.376
+  assert ext["reference_minor_M_kNm"]==215.156
+  assert ext["both_axes_within_benchmark_band"] is True
+  assert abs(ext["major_relative_difference"])<.03
+  assert abs(ext["minor_relative_difference"])<.03
+  assert ext["full_SP16_chart_verification"] is False
+  assert ext["construction_approval"] is False
+  assert "M20" in ext["source_conflict_preserved"]
+  assert "M25" in ext["source_conflict_preserved"]
+  assert "6.2.2 Independent published SP16-chart example" in (dest/"report.html").read_text()
+  assert "NPTEL SP16 column example" in (dest/"more.html").read_text()
   assert not data["column_capacity_verification"]["sp16_verified"]
   assert (dest/"data/column-verification.json").exists()
   checks=data["column_pmm_checks"]["rows"]
