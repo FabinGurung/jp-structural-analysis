@@ -74,6 +74,15 @@ jobs:
                   for x in result["column_pmm_checks"]["rows"])
               assert result["column_capacity_verification"]["relative_pure_axial_error"]<.001
               assert result["column_capacity_verification"]["sp16_verified"] is False
+              ext=result["column_capacity_verification"]["external_sp16_nptel_reference"]
+              assert ext["both_axes_within_benchmark_band"]
+              assert abs(ext["major_relative_difference"])<.03
+              assert abs(ext["minor_relative_difference"])<.03
+              assert ext["reference_major_M_kNm"]==246.376
+              assert ext["reference_minor_M_kNm"]==215.156
+              assert ext["full_SP16_chart_verification"] is False
+              assert ext["construction_approval"] is False
+              assert b"6.2.2 Independent published SP16-chart example" in get("report.html")
               assert json.loads(get("data/column-verification.json"))["construction_approval"] is False
               assert result["beam_checks"]["rows_count"]==256
               assert not result["original_project_engineering_approval"]
