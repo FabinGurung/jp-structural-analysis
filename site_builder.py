@@ -14,7 +14,8 @@ from pathlib import Path
 from r6p23.engine import build as solve, digest as model_digest
 from r6p23.runner import reference_fixture
 from r6p30.beam_design import member_checks_from_preview
-from r6p30.column_pmm import column_checks_from_preview, ASSUMED, puz_kN, steel_area, _uniaxial_response, uniaxial_at_pu
+from r6p30.column_pmm import column_checks_from_preview
+from r6p30.column_validation import compute as column_benchmark
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
 ORIGINAL_REPORT="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -89,7 +90,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col):
+def report(spec,solved,beam,col,verification):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -188,6 +189,22 @@ def report(spec,solved,beam,col):
         'slenderness/P-Δ, ductile confinement, joint forces, development length, '
         'verified SP16 column capacity diagrams, or independent columns/slabs/footing/staircase '
         'design for Narayani. The original F3 one-way shear result remains NOT SAFE.</div>'
+        '<h3>6.2.1 Independent numerical verification</h3>'
+        '<p>IS456:2000 Clause 39.1(a) uniform compression imposes ε=0.002. '
+        'For the assumed Fe500 steel, Es×ε=400 MPa, below 0.87fy=435 MPa. '
+        'Our <strong>closed-form uniform axial force</strong> is '
+        +n(verification["closed_form_P_at_uniform_epsilon_0002_kN"])+' kN; '
+        'independent numerical integration gives '
+        +n(verification["numerical_256_strip_P_at_uniform_epsilon_0002_kN"])+' kN. '
+        'The relative discrepancy is '
+        +n(100*verification["relative_pure_axial_error"])+'%. '
+        'Additional 32/64/128 strip comparisons cover tension-zone and wholly '
+        'compressed neutral-axis positions, with §39.1(b) full compression strain '
+        'properly limited below 0.0035.</p>'
+        +A('data/column-verification.json','Inspect benchmark numbers and assumptions')+'.'
+        '<div class="note">These checks verify numerical consistency and signed '
+        'input mapping; they do NOT validate the approximate steel model against '
+        'SP16 charts, any final actual-column design, or construction approval.</div>'
         '<h3>6.3 Additional original-report elements</h3><p>Slab reinforcement, isolated '
         'and combined footings, and stair reinforcement are outside the current production '
         'design modules. Their past exploratory outputs are stored in the Drive archive '
@@ -209,6 +226,9 @@ def build(out:Path=Path("site")):
     out.mkdir(parents=True,exist_ok=True)
     data=out/"data";data.mkdir(exist_ok=True)
     spec,solved,beam,col=read_actual_solver()
+    verification=column_benchmark()
+    (data/"column-verification.json").write_text(json.dumps(verification,indent=2,
+        sort_keys=True,allow_nan=False)+"\n")
     # Preserve the signed independent numerical evidence, but not every
     # historical experiment or intermediate image in the public site.
     result={"schema":"jp.structural.clean.report.v1",
@@ -218,6 +238,7 @@ def build(out:Path=Path("site")):
       "source_loads_kN":solved["source_ledger"]["gravity_totals_kN"],
       "topology":{"shells":31,"beams":32,"columns":8},
       "beam_checks":beam,"column_pmm_checks":col,
+      "column_capacity_verification":verification,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -301,7 +322,7 @@ def build(out:Path=Path("site")):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col)}
+           "report.html":report(spec,solved,beam,col,verification)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
@@ -326,6 +347,9 @@ def verify(out:Path):
     assert "NOT SAFE" in (out/"projects.html").read_text()
     result=json.loads((out/"data/report-results.json").read_text())
     assert result["original_narayani_F3_NOT_SAFE"]
+    assert result["column_capacity_verification"]["relative_pure_axial_error"]<.001
+    assert result["column_capacity_verification"]["sp16_verified"] is False
+    assert result["column_pmm_checks"]["axial_tension_rows_excluded"]>=0
     assert not result["original_project_engineering_approval"]
     for file,sha in receipt["files_sha256"].items():
         assert hashlib.sha256((out/file).read_bytes()).hexdigest()==sha,file
