@@ -97,9 +97,9 @@ def test_is456_39_1_full_compression_strain_pivot_and_axial_limit():
   assert top==pytest.approx(.002,rel=.000001)
   p,m=_uniaxial_response(*kw,1.e10,"My",n_slices=256)
   Ac=s["b_mm"]*s["D_mm"]-steel_area(s)
-  estimated=(.446*s["fck_MPa"]*Ac+min(.87*s["fy_MPa"],s["Es_MPa"]*.002)*steel_area(s))/1000.
-  # At epsilon=.002 Fe500 steel is at 400 MPa (Es*epsilon), below .87fy=435 MPa.
-  # Do NOT assume a fully plastic compression bar where strain cannot develop it.
+  estimated=(.446*s["fck_MPa"]*Ac+_steel_stress(.002,s)*steel_area(s))/1000.
+  # At epsilon=.002 Fe500 Table A stress is interpolated ~373 MPa, NOT the
+  # old bilinear Es*epsilon=400 MPa nor the final 435 MPa plateau.
   assert p==pytest.approx(estimated,rel=.001)
   assert m==pytest.approx(0.,abs=.01)
   # 39.1(b) wholly compressed must have strain_top below .0035
@@ -175,8 +175,8 @@ def test_external_iit_kharagpur_sp16_chart_reference_without_reusing_our_own_ans
   q=compare_nptel_sp16()
   assert q["reference_major_M_kNm"]==pytest.approx(246.376)
   assert q["reference_minor_M_kNm"]==pytest.approx(215.156)
-  assert q["our_major_approx_M_kNm"]==pytest.approx(247.24,abs=1.5)
-  assert q["our_minor_approx_M_kNm"]==pytest.approx(218.45,abs=1.5)
+  assert q["our_major_approx_M_kNm"]==pytest.approx(244.82,abs=1.5)
+  assert q["our_minor_approx_M_kNm"]==pytest.approx(216.39,abs=1.5)
   assert abs(q["major_relative_difference"])<.03
   assert abs(q["minor_relative_difference"])<.03
   assert q["both_axes_within_benchmark_band"]
@@ -186,3 +186,42 @@ def test_external_iit_kharagpur_sp16_chart_reference_without_reusing_our_own_ans
   assert not q["full_SP16_chart_verification"]
   assert not q["construction_approval"]
   assert "not" in q["note"].lower()
+
+
+def test_sp16_table_a_piecewise_design_steel_ordinate_nodes():
+ from r6p30.column_pmm import SP16_TABLE_A_STRESS
+ for fy in (250,415,500):
+  sec={**ASSUMED,"fy_MPa":float(fy)}
+  for eps,stress in SP16_TABLE_A_STRESS[fy]:
+   assert _steel_stress(eps,sec)==pytest.approx(min(stress,.87*fy),abs=.01)
+   assert _steel_stress(-eps,sec)==pytest.approx(-min(stress,.87*fy),abs=.01)
+ assert _steel_stress(.002,{**ASSUMED,"fy_MPa":500.})==pytest.approx(
+    369.6+(.002-.00195)/(.00226-.00195)*(391.3-369.6),abs=.00001)
+ assert _steel_stress(.002,{**ASSUMED,"fy_MPa":500.})<400.
+ assert _steel_stress(.001,{**ASSUMED,"fy_MPa":250.})==pytest.approx(200.)
+ assert _steel_stress(.01,{**ASSUMED,"fy_MPa":415.})==pytest.approx(.87*415)
+ assert _steel_stress(.01,{**ASSUMED,"fy_MPa":500.})==pytest.approx(435.)
+ assert _steel_stress(0.,ASSUMED)==pytest.approx(0.)
+
+def test_nptel_lesson25_twenty_perimeter_bars_source_chart_not_bilinear():
+ from r6p30.column_validation import compare_nptel_sp16_20bar
+ from r6p30.column_pmm import bar_positions,uniaxial_at_pu
+ q=compare_nptel_sp16_20bar()
+ assert q["published_Mu_kNm"]==pytest.approx(116.04,abs=.001)
+ assert q["our_table_A_Mu_kNm"]==pytest.approx(118.62,abs=1.5)
+ assert abs(q["relative_difference"])<.03
+ assert q["published_reference_count"]==1
+ assert not q["SP16_all_chart_points_certified"]
+ st={**ASSUMED,"b_mm":400.,"D_mm":400.,"fck_MPa":25.,"fy_MPa":415.,
+     "bar_d_mm":16.,"bar_count":20,"bar_center_cover_mm":56.}
+ pts=bar_positions(st)
+ assert len(pts)==20 and len(set(pts))==20
+ assert uniaxial_at_pu(2240,st,"My")["P_reconstructed_kN"]==pytest.approx(2240,abs=.01)
+
+def test_nptel_second_chart_catches_previous_wrong_bilinear_steel():
+ # Historical bilinear result was ~124.44kNm (+7.24% vs SP16);
+ # Table A correction must not silently regress back to it.
+ from r6p30.column_validation import compare_nptel_sp16_20bar
+ q=compare_nptel_sp16_20bar()
+ assert q["our_table_A_Mu_kNm"]<121.
+ assert q["our_table_A_Mu_kNm"]>113.
