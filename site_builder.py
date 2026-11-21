@@ -118,6 +118,7 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
     stair_full=stair["report_moment_interpretations"]["if_20p88_is_already_per_one_metre_strip"]
     stair_width=stair["report_moment_interpretations"]["if_20p88_is_a_full_1p2m_flight_moment"]
     stair_case=stair["drawing_150mm_waist_conditional_overlay_NOT_actual_demand"]
+    stair_bm=stair["published_nptel_stair_waist_section_benchmark"]
     stair_table=table(("Staircase source comparison","Readback or independently calculated value"),[
       ("Riser / tread — drawing",n(stair_drawing["riser_mm"])+" / "+n(stair_drawing["tread_mm"])+" mm"),
       ("Riser / tread — report",n(stair_source["riser_mm"])+" / "+n(stair_source["tread_mm"])+" mm"),
@@ -383,6 +384,18 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
         'tread and worked waist depth. The report moment may apply to the full '
         '1.2m flight rather than a one-metre strip. Both interpretations remain held.</p>'
         +stair_table+
+        '<h3>6.5.1 External NPTEL staircase reinforcement benchmark</h3>'
+        '<p>The IIT Kharagpur Lesson 20 Example 9.1 waist-slab has a published '
+        '102.08 kN·m for a 1.5m full-width staircase and an effective depth '
+        'of 224mm, M20/Fe415. For a one-metre strip, independent IS456 bending '
+        'calculation requires '+n(stair_bm["independent_required_steel_mm2_m"])
+        +' mm²/m, versus the published SP16-based '
+        +n(stair_bm["source_required_steel_mm2_m"])+' mm²/m ('
+        +n(100*stair_bm["relative_stress_block_vs_SP16_difference"])
+        +'% difference). '
+        +A(stair_bm["source"],'Read published IIT Kharagpur staircase example')
+        +'. This checks isolated section reinforcement only, not the physical '
+        'staircase loading, landing support, full-span solution or Narayani.</p>'
         '<p>'+A('data/staircase-source-review.json','Read full staircase arithmetic and unresolved holds')
         +' · '+A(STAIR_QA_DOC,'Full R6.37 staircase research QA (Drive)')
         +' · '+A(stair_drawing['source'],'Original July 2026 drawing')
@@ -591,6 +604,8 @@ def verify(out:Path):
     assert result["slab_reinforcement_screen"]["shell_cells"]==31
     assert not result["staircase_source_reconciliation"]["engineering_approval"]
     assert result["staircase_source_reconciliation"]["report_moment_normalization_unresolved"]
+    assert result["staircase_source_reconciliation"]["published_nptel_stair_waist_section_benchmark"]["within_predeclared_1pct_research_band"]
+    assert not result["staircase_source_reconciliation"]["published_nptel_stair_waist_section_benchmark"]["engineering_approval"]
     assert "6.5 Narayani staircase" in (out/"report.html").read_text()
     assert (out/"data/staircase-source-review.json").exists()
     assert STAIR_QA_DOC in (out/"report.html").read_text()
