@@ -29,6 +29,14 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert slab["published_oneway_nptel_benchmark"]["our_relative_chart_capacity_difference"]<-.03
   assert (dest/"data/slab-checks.csv").exists()
   assert (dest/"data/slab-benchmark.json").exists()
+  stair=data["staircase_source_reconciliation"]
+  assert stair["drawing"]["waist_D_mm"]==150
+  assert stair["revised_report"]["waist_D_used_in_flexure_mm"]==127
+  assert stair["report_moment_normalization_unresolved"] is True
+  assert stair["staircase_present_in_active_opensees_reference_model"] is False
+  assert stair["engineering_approval"] is False
+  assert (dest/"data/staircase-source-review.json").exists()
+  assert "6.5 Narayani staircase" in (dest/"report.html").read_text()
   assert "6.4 Slab reinforcement" in (dest/"report.html").read_text()
   assert "Slab bending and transverse-shear evidence" in (dest/"more.html").read_text()
   assert "https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn" in (dest/"more.html").read_text()
