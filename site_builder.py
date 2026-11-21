@@ -17,6 +17,7 @@ from r6p30.beam_design import member_checks_from_preview
 from r6p30.column_pmm import column_checks_from_preview
 from r6p30.column_validation import compute as column_benchmark
 from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
+from r6p30.slab_design import from_opensees as slab_from_opensees
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
@@ -92,7 +93,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification,f3):
+def report(spec,solved,beam,col,verification,f3,slab):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -106,6 +107,23 @@ def report(spec,solved,beam,col,verification,f3):
     twenty=verification["external_sp16_nptel_twenty_bar_reference"]
     revised=f3["preferred_uniform_revision_550mm"]
     original_f3=f3["original_report_adopted_uniform_trial_450mm"]
+    slab_gov=slab["governing_example"]
+    slab_ref=slab["published_oneway_nptel_benchmark"]
+    slab_table=table(("Slab calculation","Current worked example result"),[
+      ("Actual finite-element basis","31 ShellMITC4 panels, 4 Gauss points each"),
+      ("Screen count",str(slab["rows_count"])+" face/direction combinations"),
+      ("Assumed depth and rebar","120 mm; Ø8 @150 both faces and directions"),
+      ("Conservative effective depth",n(slab["section"]["d_mm"])+" mm"),
+      ("Rebar area provided",n(slab["section"]["As_provided_mm2_m"])+" mm²/m"),
+      ("Minimum steel",n(slab["section"]["As_min_mm2_m"])+" mm²/m"),
+      ("Governing panel",slab_gov["cell"]+" / "+slab_gov["mode"]),
+      ("Governing X/Y and face",slab_gov["direction"]+"/"+slab_gov["face"]),
+      ("Governing Gauss point",str(slab_gov["gauss"])),
+      ("Design moment with assumed torsion adjustment",
+         n(slab_gov["design_moment_WoodArmer_assumed_kNm_m"])+" kN·m/m"),
+      ("Isolated bending screens",str(slab["flexure_screen_ok"])+"/"+str(slab["rows_count"])),
+      ("Transverse shear screens",str(slab["transverse_shear_screen_ok"])+"/"+str(slab["rows_count"])),
+      ("Actual building or site approval","NOT VERIFIED")])
     f3_table=table(("Condition","Original adopted depth","Proposed uniform-thickness trial"),[
       ("Plan geometry","2.10 × 2.10 m","2.10 × 2.10 m; confirm site"),
       ("Structural depth","450 mm adopted, sloped drawing","550 mm uniform, NEW proposal"),
@@ -150,6 +168,7 @@ def report(spec,solved,beam,col,verification,f3):
       ("Rigid diaphragm vertical displacement",n(disp(rigid))+" mm","Actually solved DL"),
       ("Beam design screens",str(beam["rows_count"]),"Matched same-end My/Vz for two modes and two synthetic U± cases"),
       ("Column P–M–M screens",str(col["row_count"]),"Simultaneous N/My/Mz with approximate strain-compatible uniaxial capacities"),
+      ("Slab reinforcement screens",str(slab["rows_count"]),"Genuine four-Gauss ShellMITC4 moments; top/bottom X/Y strip design") ,
     ])
     btable=table(("Item","Selected genuine numerical result"),[
        ("Source member",bend["member"]+" / "+bend["end"]+" / "+bend["mode"]),
@@ -202,7 +221,10 @@ def report(spec,solved,beam,col,verification,f3):
         'The tested beam procedure evaluates IS456 rectangular flexure and vertical shear for every '
         'signed same-beam-end load combination. The column procedure evaluates an approximate '
         'uniaxial fiber strain-compatibility section strength at a given Pu, then the IS456 '
-        '§39.6 biaxial load-contour exponent.</p>'
+        '§39.6 biaxial load-contour exponent. The slab screen takes four-point '
+        'signed ShellMITC4 plate moments and shear, applies Wood–Armer-style '
+        'twisting adjustment to the top/bottom X/Y strip envelope, then uses '
+        'IS456 §26.5.2/26.3.3 and Annex G slab flexure formulas.</p>'
         '<div class="note">The column uniaxial capacities are numerical approximations, NOT verified SP16 '
         'chart capacities. Axial member-end forces now follow the signed I/J compression convention in '
         'this demonstration. Tension cases are excluded, not disguised as compression. The uniaxial capacities remain outside SP16 verification.</div>'),
