@@ -118,6 +118,20 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
     stair_full=stair["report_moment_interpretations"]["if_20p88_is_already_per_one_metre_strip"]
     stair_width=stair["report_moment_interpretations"]["if_20p88_is_a_full_1p2m_flight_moment"]
     stair_case=stair["drawing_150mm_waist_conditional_overlay_NOT_actual_demand"]
+    stair_geometry=stair["source_geometry_and_support_gate"]
+    stair_figure=stair_geometry["drawing_180mm_riser_255mm_tread"]
+    stair_grid=stair_geometry["original_drawing"]
+    stair_geometry_table=table(("Source-checked staircase data","Engineering interpretation"),[
+      ("Physical drawing sheet","STR-16, PDF page 16, July 2026"),
+      ("Column-grid bay C–D / 1–2","4,965 × 4,275 mm, not staircase clear span"),
+      ("First / second / third flight section","X–X / Y–Y / X–X, not complete 3D topology"),
+      ("Drawing rise / going / waist","180 / 255 / 150 mm"),
+      ("Geometric stair slope",n(stair_figure["inclination_deg"])+" degrees from source riser/tread"),
+      ("Landing beam note","9-inch × 12-inch secondary beam appears at second flight landing"),
+      ("720mm drawing annotation","Local flight-end note, not verified landing clear span"),
+      ("Actual flight and landing spans","Unverified — model gate closed"),
+      ("Actual support XYZ and continuity","Unverified — model gate closed"),
+      ("Source-reconciled staircase FEM","Not built — no actual OpenSees staircase results")])
     stair_bm=stair["published_nptel_stair_waist_section_benchmark"]
     stair_table=table(("Staircase source comparison","Readback or independently calculated value"),[
       ("Riser / tread — drawing",n(stair_drawing["riser_mm"])+" / "+n(stair_drawing["tread_mm"])+" mm"),
@@ -384,6 +398,16 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
         'tread and worked waist depth. The report moment may apply to the full '
         '1.2m flight rather than a one-metre strip. Both interpretations remain held.</p>'
         +stair_table+
+        '<h3>6.5.2 Original drawing geometry and support verification</h3>'
+        '<p>A visual readback of drawing STR-16 (physical PDF page 16) establishes '
+        'the 4,965 by 4,275mm C–D / 1–2 column-grid bay, three drawn flight '
+        'details, and specific 720mm end-region notes. None is a confirmed '
+        'flight effective span or a supported complete staircase FEM mesh.</p>'
+        +stair_geometry_table+
+        '<p>'+A('data/staircase-geometry.json','Source-verified geometry and support hold register')
+        +'. The initial structural OpenSees model has no actual staircase; '
+        'the new physical-model gate refuses missing support coordinates, '
+        'landing polygons, restraints, load paths and load combinations.</p>'
         '<h3>6.5.1 External NPTEL staircase reinforcement benchmark</h3>'
         '<p>The IIT Kharagpur Lesson 20 Example 9.1 waist-slab has a published '
         '102.08 kN·m for a 1.5m full-width staircase and an effective depth '
@@ -428,6 +452,9 @@ def build(out:Path=Path("site")):
     f3=f3_study()
     slab=slab_from_opensees(solved)
     stair=staircase_review()
+    (data/"staircase-geometry.json").write_text(json.dumps(
+        stair["source_geometry_and_support_gate"],indent=2,
+        sort_keys=True,allow_nan=False)+"\n")
     (data/"staircase-source-review.json").write_text(json.dumps(stair,indent=2,
          sort_keys=True,allow_nan=False)+"\n")
     (data/"slab-benchmark.json").write_text(json.dumps(
@@ -607,6 +634,13 @@ def verify(out:Path):
     assert result["staircase_source_reconciliation"]["published_nptel_stair_waist_section_benchmark"]["within_predeclared_1pct_research_band"]
     assert not result["staircase_source_reconciliation"]["published_nptel_stair_waist_section_benchmark"]["engineering_approval"]
     assert "6.5 Narayani staircase" in (out/"report.html").read_text()
+    assert "6.5.2 Original drawing geometry" in (out/"report.html").read_text()
+    geo=result["staircase_source_reconciliation"]["source_geometry_and_support_gate"]
+    assert geo["original_drawing"]["drawing_sheet_label"]=="STR-16"
+    assert geo["grid_bay_is_not_FEM_effective_span"]
+    assert not geo["actual_staircase_model_ready"]
+    assert not geo["engineering_approval"]
+    assert (out/"data/staircase-geometry.json").exists()
     assert (out/"data/staircase-source-review.json").exists()
     assert STAIR_QA_DOC in (out/"report.html").read_text()
     assert STAIR_QA_DOC in (out/"more.html").read_text()
