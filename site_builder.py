@@ -323,10 +323,42 @@ def report(spec,solved,beam,col,verification,f3,slab):
         'The earlier failed footing is NOT retroactively marked safe.</div>'
         +A('data/f3-trial.json','Open source-traceable trial calculation (JSON)')+' · '
         +A(F3_PDF,'Full eight-page F3 and SP16 research report in Drive')+'.'
-        '<h3>6.4 Other original-report elements</h3><p>Actual-project slab reinforcement, '
-        'combined footing and staircase design remain incomplete. '
-        'The historical research is preserved in the Drive archive '
-        'rather than published as approved project designs.</p>'),
+        '<h3>6.4 Slab reinforcement from actual OpenSees shell moments</h3>'
+        '<p>ShellMITC4 <em>stresses</em> returns four eight-component '
+        'Gauss section resultants per panel; we use M11, M22, M12 '
+        'and transverse shears Q1/Q2, not element nodal resisting forces. '
+        'The same load-case Gauss results are superposed for each '
+        'synthetic U combination. Wood–Armer-style M11/M22 ± |M12| '
+        'adjustments are evaluated independently at top/bottom faces '
+        'and both axes; the actual local-to-face sign convention '
+        'remains an explicit source-review assumption.</p>'
+        +slab_table+
+        '<p>'+A('data/slab-checks.csv','Download all slab design screens (CSV)')+
+        ' · '+A('data/slab-benchmark.json','Read independent benchmark values (JSON)')+'.</p>'
+        '<h3>6.4.1 Published NPTEL one-way slab benchmark</h3>'
+        '<p>IIT Kharagpur Lesson 18 TQ3: 175mm slab, 150mm effective depth, '
+        '3.5m simply supported one-way span, M20 Fe415, 1kPa finish '
+        'and 4kPa live load. The independent formula gives '
+        +n(slab_ref["factored_pressure_kPa"])+' kPa factored pressure '
+        'and '+n(slab_ref["computed_analytic_Mu_kNm_m"])+
+        ' kN·m/m bending, agreeing with the published 21.533 value. '
+        'With 8mm @120mm main steel, our simplified Annex G section '
+        'strength is '+n(slab_ref["our_IS456_AnnexG_capacity_kNm_m"])+
+        ' kN·m/m versus the source SP16 Table41 '
+        +n(slab_ref["published_SP16_table41_capacity_kNm_m"])+
+        ' kN·m/m, a '+n(100*slab_ref["our_relative_chart_capacity_difference"])+
+        '% disagreement. This is openly retained, NOT certified capacity agreement. '
+        +A(slab_ref["source_url"],'Read original IIT Kharagpur lesson')+'.</p>'
+        '<div class="note"><strong>NOT A NARAYANI SLAB DESIGN.</strong> '
+        'The Narayani source drawing specifies Ø8 @150 in both directions '
+        'and shows a typical 125mm depth, unlike this 120mm synthetic fixture. '
+        'Governing project span, supports, live loads, bar continuity/anchorage, '
+        'torsion steel at corners, service deflection, cracks and actual '
+        'seismic combinations remain unresolved. F3 foundation safety '
+        'review remains separately held.</div>'
+        '<h3>6.5 Other original-report elements</h3><p>Combined footings '
+        'and staircase final designs remain incomplete and must not '
+        'be inferred from this elastic slab study.</p>'),
     ]
     toc='<nav class="toc"><b>TABLE OF CONTENTS</b>'+''.join(
       f'<a href="#{key}">{e(label)}</a>' for key,label,_ in chapters)+'</nav>'
