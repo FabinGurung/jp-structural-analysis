@@ -17,6 +17,7 @@ from r6p30.beam_design import member_checks_from_preview
 from r6p30.column_pmm import column_checks_from_preview
 from r6p30.column_validation import compute as column_benchmark
 from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
+from r6p30.slab_design import from_opensees as slab_from_opensees
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
@@ -92,7 +93,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification,f3):
+def report(spec,solved,beam,col,verification,f3,slab):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -106,6 +107,23 @@ def report(spec,solved,beam,col,verification,f3):
     twenty=verification["external_sp16_nptel_twenty_bar_reference"]
     revised=f3["preferred_uniform_revision_550mm"]
     original_f3=f3["original_report_adopted_uniform_trial_450mm"]
+    slab_gov=slab["governing_example"]
+    slab_ref=slab["published_oneway_nptel_benchmark"]
+    slab_table=table(("Slab calculation","Current worked example result"),[
+      ("Actual finite-element basis","31 ShellMITC4 panels, 4 Gauss points each"),
+      ("Screen count",str(slab["rows_count"])+" face/direction combinations"),
+      ("Assumed depth and rebar","120 mm; Ø8 @150 both faces and directions"),
+      ("Conservative effective depth",n(slab["section"]["d_mm"])+" mm"),
+      ("Rebar area provided",n(slab["section"]["As_provided_mm2_m"])+" mm²/m"),
+      ("Minimum steel",n(slab["section"]["As_min_mm2_m"])+" mm²/m"),
+      ("Governing panel",slab_gov["cell"]+" / "+slab_gov["mode"]),
+      ("Governing X/Y and face",slab_gov["direction"]+"/"+slab_gov["face"]),
+      ("Governing Gauss point",str(slab_gov["gauss"])),
+      ("Design moment with assumed torsion adjustment",
+         n(slab_gov["design_moment_WoodArmer_assumed_kNm_m"])+" kN·m/m"),
+      ("Isolated bending screens",str(slab["flexure_screen_ok"])+"/"+str(slab["rows_count"])),
+      ("Transverse shear screens",str(slab["transverse_shear_screen_ok"])+"/"+str(slab["rows_count"])),
+      ("Actual building or site approval","NOT VERIFIED")])
     f3_table=table(("Condition","Original adopted depth","Proposed uniform-thickness trial"),[
       ("Plan geometry","2.10 × 2.10 m","2.10 × 2.10 m; confirm site"),
       ("Structural depth","450 mm adopted, sloped drawing","550 mm uniform, NEW proposal"),
@@ -150,6 +168,7 @@ def report(spec,solved,beam,col,verification,f3):
       ("Rigid diaphragm vertical displacement",n(disp(rigid))+" mm","Actually solved DL"),
       ("Beam design screens",str(beam["rows_count"]),"Matched same-end My/Vz for two modes and two synthetic U± cases"),
       ("Column P–M–M screens",str(col["row_count"]),"Simultaneous N/My/Mz with approximate strain-compatible uniaxial capacities"),
+      ("Slab reinforcement screens",str(slab["rows_count"]),"Genuine four-Gauss ShellMITC4 moments; top/bottom X/Y strip design") ,
     ])
     btable=table(("Item","Selected genuine numerical result"),[
        ("Source member",bend["member"]+" / "+bend["end"]+" / "+bend["mode"]),
@@ -202,7 +221,10 @@ def report(spec,solved,beam,col,verification,f3):
         'The tested beam procedure evaluates IS456 rectangular flexure and vertical shear for every '
         'signed same-beam-end load combination. The column procedure evaluates an approximate '
         'uniaxial fiber strain-compatibility section strength at a given Pu, then the IS456 '
-        '§39.6 biaxial load-contour exponent.</p>'
+        '§39.6 biaxial load-contour exponent. The slab screen takes four-point '
+        'signed ShellMITC4 plate moments and shear, applies Wood–Armer-style '
+        'twisting adjustment to the top/bottom X/Y strip envelope, then uses '
+        'IS456 §26.5.2/26.3.3 and Annex G slab flexure formulas.</p>'
         '<div class="note">The column uniaxial capacities are numerical approximations, NOT verified SP16 '
         'chart capacities. Axial member-end forces now follow the signed I/J compression convention in '
         'this demonstration. Tension cases are excluded, not disguised as compression. The uniaxial capacities remain outside SP16 verification.</div>'),
@@ -301,10 +323,42 @@ def report(spec,solved,beam,col,verification,f3):
         'The earlier failed footing is NOT retroactively marked safe.</div>'
         +A('data/f3-trial.json','Open source-traceable trial calculation (JSON)')+' · '
         +A(F3_PDF,'Full eight-page F3 and SP16 research report in Drive')+'.'
-        '<h3>6.4 Other original-report elements</h3><p>Actual-project slab reinforcement, '
-        'combined footing and staircase design remain incomplete. '
-        'The historical research is preserved in the Drive archive '
-        'rather than published as approved project designs.</p>'),
+        '<h3>6.4 Slab reinforcement from actual OpenSees shell moments</h3>'
+        '<p>ShellMITC4 <em>stresses</em> returns four eight-component '
+        'Gauss section resultants per panel; we use M11, M22, M12 '
+        'and transverse shears Q1/Q2, not element nodal resisting forces. '
+        'The same load-case Gauss results are superposed for each '
+        'synthetic U combination. Wood–Armer-style M11/M22 ± |M12| '
+        'adjustments are evaluated independently at top/bottom faces '
+        'and both axes; the actual local-to-face sign convention '
+        'remains an explicit source-review assumption.</p>'
+        +slab_table+
+        '<p>'+A('data/slab-checks.csv','Download all slab design screens (CSV)')+
+        ' · '+A('data/slab-benchmark.json','Read independent benchmark values (JSON)')+'.</p>'
+        '<h3>6.4.1 Published NPTEL one-way slab benchmark</h3>'
+        '<p>IIT Kharagpur Lesson 18 TQ3: 175mm slab, 150mm effective depth, '
+        '3.5m simply supported one-way span, M20 Fe415, 1kPa finish '
+        'and 4kPa live load. The independent formula gives '
+        +n(slab_ref["factored_pressure_kPa"])+' kPa factored pressure '
+        'and '+n(slab_ref["computed_analytic_Mu_kNm_m"])+
+        ' kN·m/m bending, agreeing with the published 21.533 value. '
+        'With 8mm @120mm main steel, our simplified Annex G section '
+        'strength is '+n(slab_ref["our_IS456_AnnexG_capacity_kNm_m"])+
+        ' kN·m/m versus the source SP16 Table41 '
+        +n(slab_ref["published_SP16_table41_capacity_kNm_m"])+
+        ' kN·m/m, a '+n(100*slab_ref["our_relative_chart_capacity_difference"])+
+        '% disagreement. This is openly retained, NOT certified capacity agreement. '
+        +A(slab_ref["source_url"],'Read original IIT Kharagpur lesson')+'.</p>'
+        '<div class="note"><strong>NOT A NARAYANI SLAB DESIGN.</strong> '
+        'The Narayani source drawing specifies Ø8 @150 in both directions '
+        'and shows a typical 125mm depth, unlike this 120mm synthetic fixture. '
+        'Governing project span, supports, live loads, bar continuity/anchorage, '
+        'torsion steel at corners, service deflection, cracks and actual '
+        'seismic combinations remain unresolved. F3 foundation safety '
+        'review remains separately held.</div>'
+        '<h3>6.5 Other original-report elements</h3><p>Combined footings '
+        'and staircase final designs remain incomplete and must not '
+        'be inferred from this elastic slab study.</p>'),
     ]
     toc='<nav class="toc"><b>TABLE OF CONTENTS</b>'+''.join(
       f'<a href="#{key}">{e(label)}</a>' for key,label,_ in chapters)+'</nav>'
@@ -324,6 +378,10 @@ def build(out:Path=Path("site")):
     spec,solved,beam,col=read_actual_solver()
     verification=column_benchmark()
     f3=f3_study()
+    slab=slab_from_opensees(solved)
+    (data/"slab-benchmark.json").write_text(json.dumps(
+        slab["published_oneway_nptel_benchmark"],indent=2,
+        sort_keys=True,allow_nan=False)+"\n")
     (data/"f3-trial.json").write_text(json.dumps(f3,indent=2,
         sort_keys=True,allow_nan=False)+"\n")
     (data/"column-verification.json").write_text(json.dumps(verification,indent=2,
@@ -339,6 +397,7 @@ def build(out:Path=Path("site")):
       "beam_checks":beam,"column_pmm_checks":col,
       "column_capacity_verification":verification,
       "f3_proposed_concentric_redesign_study":f3,
+      "slab_reinforcement_screen":slab,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -362,6 +421,26 @@ def build(out:Path=Path("site")):
           r["PMM"]["My1_approx_capacity_kNm"],r["PMM"]["Mz1_approx_capacity_kNm"],
           r["PMM"].get("biaxial_exponent_alpha"),r["PMM"].get("minimum_eccentricity_governing"),r["PMM"]["biaxial_load_contour_utilization"],
           r["PMM"]["status"]) for r in col["rows"]])
+    write_csv(data/"slab-checks.csv",
+        ("mode","combination","cell","floor","gauss","axis","face",
+         "signed_M11","signed_M22","signed_M12","signed_Q1","signed_Q2",
+         "WoodArmer_Mu_kNm_m","As_required_with_min_mm2_m","As_provided_mm2_m",
+         "M_provided_kNm_m","bending_status","shear_tau_v_MPa","shear_tau_c_MPa",
+         "shear_ok","real_building_sign_validated"),
+        [(x["mode"],x["combination"],x["cell"],x["floor"],x["gauss"],
+          x["direction"],x["face"],
+          *x["shell_original_signed_m11_m22_m12_kNm_m"],
+          *x["shell_original_signed_q1_q2_kN_m"],
+          x["design_moment_WoodArmer_assumed_kNm_m"],
+          x["bending"]["As_required_with_min_mm2_m"],
+          x["bending"]["As_provided_mm2_m"],
+          x["bending"]["M_provided_capacity_kNm_m"],
+          x["bending"]["status"],
+          x["transverse_shear"]["tau_v_MPa"],
+          x["transverse_shear"]["tau_c_slab_MPa"],
+          x["transverse_shear"]["isolated_transverse_shear_ok"],
+          x["actual_top_bottom_sign_validated_in_real_structure"])
+         for x in slab["rows"]])
     home=page("Structural Analysis",
        "A simple working studio: review your building and generate a reproducible structural report.",
        box("Start here",'<div class="grid">'+
@@ -371,9 +450,9 @@ def build(out:Path=Path("site")):
           f'<div class="tile"><b>{A("more.html","Resources")}</b><p>Retrievable full historical archive in Google Drive and original reference files.</p></div></div>')+
        box("Current engine capabilities",
          '<p><strong>Working:</strong> elastic slab/frame FE, member forces and reactions, '
-         'reusable isolated beam flexure/shear, and bounded approximate column P–M–M.'
+         'beam flexure/shear, approximate column P–M–M and new ShellMITC4 slab reinforcement screens.'
          ' <strong>Not yet complete:</strong> seismic design verification, detailed slabs,'
-         ' footings, stairs, ductile detailing and signed construction drawings.</p>'
+         ' final slab detailing/deflection, footings, stairs, ductile detailing and signed drawings.</p>'
          '<div class="meta"><span>4 clean site sections</span><span>1 report</span>'
          '<span>2 active numerical design checks</span></div>'))
     studio=page("Studio Standard","One project sequence; use the original sources as authority.",
@@ -430,16 +509,18 @@ def build(out:Path=Path("site")):
          f'<p>{A("report.html","Working six-chapter report")} · '
          f'{A("data/report-results.json","Reproducible current calculations")}'
          f' · {A("data/beam-checks.csv","Beam design evidence")}'
-         f' · {A("data/column-pmm-checks.csv","Column P–M–M evidence")}</p>'
+         f' · {A("data/column-pmm-checks.csv","Column P–M–M evidence")}'
+         f' · {A("data/slab-checks.csv","Slab bending and transverse-shear evidence")}</p>'
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification,f3)}
+           "report.html":report(spec,solved,beam,col,verification,f3,slab)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
       "original_engineering_approval":False,
       "beam_rows":beam["rows_count"],"column_rows":col["row_count"],
+      "slab_rows":slab["rows_count"],
       "source_sha256":model_digest(spec),
       "files_sha256":{
        p.relative_to(out).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
@@ -452,6 +533,7 @@ def build(out:Path=Path("site")):
 def verify(out:Path):
     receipt=json.loads((out/"receipt.json").read_text())
     assert receipt["beam_rows"]==256 and receipt["column_rows"]==64
+    assert receipt["slab_rows"]==496
     assert len(receipt["pages"])==5 and len(NAV)==4
     assert (out/"more.html").read_text().count(DRIVE_ARCHIVE)>=1
     assert "6.0 Design of Structural Elements" in (out/"report.html").read_text()
@@ -459,6 +541,10 @@ def verify(out:Path):
     assert "NOT SAFE" in (out/"projects.html").read_text()
     result=json.loads((out/"data/report-results.json").read_text())
     assert result["original_narayani_F3_NOT_SAFE"]
+    assert result["slab_reinforcement_screen"]["rows_count"]==496
+    assert result["slab_reinforcement_screen"]["shell_cells"]==31
+    assert not result["slab_reinforcement_screen"]["engineering_approval"]
+    assert not result["slab_reinforcement_screen"]["actual_project_slab_geometry_and_rebar_verified"]
     assert result["f3_proposed_concentric_redesign_study"]["historical_not_safe_preserved"]
     assert result["f3_proposed_concentric_redesign_study"]["preferred_uniform_revision_550mm"]["listed_concentric_checks_pass"]
     assert not result["f3_proposed_concentric_redesign_study"]["approved_for_construction"]
@@ -472,6 +558,8 @@ def verify(out:Path):
         assert hashlib.sha256((out/file).read_bytes()).hexdigest()==sha,file
     with (out/"data/beam-checks.csv").open(newline="") as fp:
         assert sum(1 for _ in csv.reader(fp))==257
+    with (out/"data/slab-checks.csv").open(newline="") as fp:
+        assert sum(1 for _ in csv.reader(fp))==497
     with (out/"data/column-pmm-checks.csv").open(newline="") as fp:
         assert sum(1 for _ in csv.reader(fp))==65
     return receipt

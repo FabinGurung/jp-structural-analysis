@@ -22,8 +22,14 @@ R6.35 F3: `r6p30/footing_f3.py` preserves the original Narayani page-61 NOT SAFE
 
 R6.35 SP16: active numerical code now uses interpolated IIT Kharagpur NPTEL Lesson23 SP16 Table A steel stress points instead of the erroneous optimistic bilinear steel. CI checks 12- and 20-bar independent NPTEL chart examples. The Drive research audit has 13 individually published reference values within a predeclared 3% *research* band, plus 720 internal mesh-refinement calculations across 3 chart families and Fe250/415/500; 720 is NOT 720 independent chart comparisons. The full SP16 source chart suite and actual building design have NOT been formally certified. Source: https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l23.pdf .
 
+
+## R6.36 — slab reinforcing steel from genuine OpenSees ShellMITC4 plate resultants
+
+The live report exports four Gauss-point section-resultant vectors per real ShellMITC4 panel from `ops.eleResponse(tag,"stresses")`: p11,p22,p12,m11,m22,m12,q1,q2; with model units kN and m, plate moments are kN·m/m, shear kN/m. The signed *simultaneous* values are superposed across the synthetic combinations, then a Wood–Armer-style ±|M12| adjustment is applied to each assumed top/bottom X/Y face and screened with an IS456 Annex G one-metre strip. The assumed 120 mm M25 Fe500 slab and 8mm @150 top/bottom cage are NOT the original Narayani 125mm/8mm@150 geometry and are not construction approved. This adds 496 face/axis/cell/combination checks, `data/slab-checks.csv`, and the NPTEL one-way independently derived bending benchmark in `data/slab-benchmark.json`. The original NPTEL example's SP16 Table41 steel strength 22.26kNm/m differs from our simplified Annex G 21.35kNm/m; the disagreement is explicit and unresolved. No seismic, deflection, cracking, anchorage, opening edge steel, top/bottom sign or project-specific safety approval is implied. Academic source: https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m8l18.pdf .
+
+
 ## Reproduce
-Python 3.12; \`pip install -r requirements.txt\`; \`pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py tests/test_product.py\`; \`python site_builder.py\`.
+Python 3.12; \`pip install -r requirements.txt\`; \`pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py tests/test_product.py\`; \`python site_builder.py\`.
 
 ## Governance
 This is a *hypothetical* structural analysis and limited member calculation prototype, not Narayani construction approval. Column local signed N is interpreted by element-end convention for bottom I → top J in the synthetic model; tensile actions are not screened as compression. The actual member orientation and load signs must be verified for any real building. Beam flexure/shear is not an issued bar schedule. Original F3 one-way shear **NOT SAFE** is not cleared.

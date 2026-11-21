@@ -22,7 +22,7 @@ jobs:
       - name: Install pinned runtime
         run: python -m pip install -r requirements.txt
       - name: Verify independent beam/column equations and actual OpenSees solve
-        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py tests/test_product.py
+        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py tests/test_product.py
       - name: Generate only four main pages and one structural report
         run: |
           python site_builder.py
@@ -93,6 +93,17 @@ jobs:
               assert b"6.2.2 Independent published SP16-chart example" in get("report.html")
               assert json.loads(get("data/column-verification.json"))["construction_approval"] is False
               assert result["beam_checks"]["rows_count"]==256
+              slab=result["slab_reinforcement_screen"]
+              assert receipt["slab_rows"]==496
+              assert slab["rows_count"]==496 and slab["shell_cells"]==31
+              assert not slab["engineering_approval"]
+              assert not slab["actual_project_slab_geometry_and_rebar_verified"]
+              assert slab["published_oneway_nptel_benchmark"]["computed_analytic_Mu_kNm_m"]>21.53
+              assert slab["published_oneway_nptel_benchmark"]["our_relative_chart_capacity_difference"]<-.03
+              assert b"6.4 Slab reinforcement" in get("report.html")
+              assert len(get("data/slab-checks.csv").splitlines())==497
+              assert json.loads(get("data/slab-benchmark.json"))["construction_approval"] is False
+
               assert not result["original_project_engineering_approval"]
               assert result["original_narayani_F3_NOT_SAFE"]
               assert b"6.0 Design of Structural Elements" in get("report.html")

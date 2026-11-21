@@ -18,6 +18,20 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert data["source_loads_kN"]["LL"]==62.
   assert data["beam_checks"]["rows_count"]==256
   assert data["column_pmm_checks"]["row_count"]==64
+  slab=data["slab_reinforcement_screen"]
+  assert slab["rows_count"]==496
+  assert slab["shell_cells"]==31
+  assert slab["source_SHA256"]==data["model_source_SHA256"]
+  assert not slab["engineering_approval"]
+  assert not slab["complete_crackwidth_deflection_checked"]
+  assert not slab["actual_project_slab_geometry_and_rebar_verified"]
+  assert slab["published_oneway_nptel_benchmark"]["computed_analytic_Mu_kNm_m"]==pytest.approx(21.533203125)
+  assert slab["published_oneway_nptel_benchmark"]["our_relative_chart_capacity_difference"]<-.03
+  assert (dest/"data/slab-checks.csv").exists()
+  assert (dest/"data/slab-benchmark.json").exists()
+  assert "6.4 Slab reinforcement" in (dest/"report.html").read_text()
+  assert "Slab bending and transverse-shear evidence" in (dest/"more.html").read_text()
+
   assert not data["original_project_engineering_approval"]
   assert data["original_narayani_F3_NOT_SAFE"]
   assert data["column_pmm_checks"]["source_SHA256"]==data["model_source_SHA256"]
@@ -75,6 +89,8 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert "NOT SAFE" in report
   with (dest/"data/beam-checks.csv").open() as f:
     assert len(list(csv.DictReader(f)))==256
+  with (dest/"data/slab-checks.csv").open() as f:
+    assert len(list(csv.DictReader(f)))==496
   with (dest/"data/column-pmm-checks.csv").open() as f:
     assert len(list(csv.DictReader(f)))==64
 
