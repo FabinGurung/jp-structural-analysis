@@ -108,6 +108,12 @@ jobs:
               assert stair["report_moment_normalization_unresolved"]
               assert not stair["staircase_present_in_active_opensees_reference_model"]
               assert b"6.5 Narayani staircase" in get("report.html")
+              bm=stair["published_nptel_stair_waist_section_benchmark"]
+              assert bm["within_predeclared_1pct_research_band"]
+              assert abs(bm["relative_stress_block_vs_SP16_difference"])<.01
+              assert bm["source_required_steel_mm2_m"]==920.64
+              assert not bm["engineering_approval"]
+              assert b"6.5.1 External NPTEL staircase" in get("report.html")
               assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("report.html")
               assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("more.html")
               assert json.loads(get("data/staircase-source-review.json"))["engineering_approval"] is False

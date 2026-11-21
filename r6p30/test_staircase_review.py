@@ -78,3 +78,20 @@ def test_invalid_inputs_are_rejected(change):
     kwargs.update(change)
     with pytest.raises(ValueError,match="STAIRCASE HOLD"):
         flexural_strip(**kwargs)
+
+
+def test_published_iit_kharagpur_staircase_waist_benchmark_independent():
+    from r6p30.staircase_review import published_nptel_staircase_benchmark
+    x=published_nptel_staircase_benchmark()
+    assert x["source"].endswith("/m9l20.pdf")
+    assert x["source_total_factored_moment_kNm_for_1p5m_width"]==pytest.approx(102.08)
+    assert x["moment_normalized_kNm_per_m"]==pytest.approx(102.08/1.5)
+    assert x["source_required_steel_mm2_m"]==pytest.approx(920.64)
+    assert x["independent_required_steel_mm2_m"]==pytest.approx(921.2607899924,abs=.001)
+    assert x["within_predeclared_1pct_research_band"] is True
+    assert abs(x["relative_stress_block_vs_SP16_difference"])<.01
+    assert x["independent_bar_section_screen_ok"] is True
+    assert x["not_complete_staircase_loading_or_reactions_benchmark"] is True
+    assert x["not_a_Narayani_building_design"] is True
+    assert x["engineering_approval"] is False
+    assert review()["published_nptel_stair_waist_section_benchmark"]==x
