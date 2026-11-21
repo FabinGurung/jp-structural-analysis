@@ -18,6 +18,7 @@ from r6p30.column_pmm import column_checks_from_preview
 from r6p30.column_validation import compute as column_benchmark
 from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
 from r6p30.slab_design import from_opensees as slab_from_opensees
+from r6p30.staircase_review import review as staircase_review
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 SLAB_ARCHIVE="https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn"
 SLAB_QA_PDF="https://drive.google.com/file/d/1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG/view"
@@ -95,7 +96,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification,f3,slab):
+def report(spec,solved,beam,col,verification,f3,slab,stair):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -111,6 +112,23 @@ def report(spec,solved,beam,col,verification,f3,slab):
     original_f3=f3["original_report_adopted_uniform_trial_450mm"]
     slab_gov=slab["governing_example"]
     slab_ref=slab["published_oneway_nptel_benchmark"]
+    stair_drawing=stair["drawing"]
+    stair_source=stair["revised_report"]
+    stair_full=stair["report_moment_interpretations"]["if_20p88_is_already_per_one_metre_strip"]
+    stair_width=stair["report_moment_interpretations"]["if_20p88_is_a_full_1p2m_flight_moment"]
+    stair_case=stair["drawing_150mm_waist_conditional_overlay_NOT_actual_demand"]
+    stair_table=table(("Staircase source comparison","Readback or independently calculated value"),[
+      ("Riser / tread — drawing",n(stair_drawing["riser_mm"])+" / "+n(stair_drawing["tread_mm"])+" mm"),
+      ("Riser / tread — report",n(stair_source["riser_mm"])+" / "+n(stair_source["tread_mm"])+" mm"),
+      ("Drawing waist and main bars","150 mm; Ø12 @125mm"),
+      ("Report waist","150 mm declared; 127 mm worked; effective d=106 mm"),
+      ("Source maximum bending moment",n(stair_source["reported_maximum_BM_kNm"])+" kN·m; 1.2m flight vs 1m strip unresolved"),
+      ("Required steel if per-metre",n(stair_full["As_required_mm2_per_m"])+" mm²/m at d=106mm"),
+      ("Required steel if full 1.2m flight",n(stair_width["As_required_mm2_per_m"])+" mm²/m at d=106mm"),
+      ("Source report required steel number",n(stair_source["reported_required_As_number_mm2"])+" mm²; section/units not reconciled"),
+      ("Worked 127mm section provided Ø12@127","Exceeds singly reinforced neutral-axis limit at d=106mm"),
+      ("Drawing 150mm section — assumption only",n(stair_case["As_provided_mm2_per_m"])+" mm²/m; d=129mm ASSUMED"),
+      ("Physical staircase OpenSees model","NOT PRESENT; all real design approvals on hold")])
     slab_table=table(("Slab calculation","Current worked example result"),[
       ("Actual finite-element basis","31 ShellMITC4 panels, 4 Gauss points each"),
       ("Screen count",str(slab["rows_count"])+" face/direction combinations"),
@@ -359,9 +377,21 @@ def report(spec,solved,beam,col,verification,f3,slab):
         'torsion steel at corners, service deflection, cracks and actual '
         'seismic combinations remain unresolved. F3 foundation safety '
         'review remains separately held.</div>'
-        '<h3>6.5 Other original-report elements</h3><p>Combined footings '
-        'and staircase final designs remain incomplete and must not '
-        'be inferred from this elastic slab study.</p>'),
+        '<h3>6.5 Narayani staircase — original-source reconciliation</h3>'
+        '<p>The July 2026 stair drawing and revised structural analysis disagree on riser, '
+        'tread and worked waist depth. The report moment may apply to the full '
+        '1.2m flight rather than a one-metre strip. Both interpretations remain held.</p>'
+        +stair_table+
+        '<p>'+A('data/staircase-source-review.json','Read full staircase arithmetic and unresolved holds')
+        +' · '+A(stair_drawing['source'],'Original July 2026 drawing')
+        +' · '+A(stair_source['source'],'Revised structural report')+'.</p>'
+        '<div class="note"><strong>ENGINEERING HOLD.</strong> This is only a source '
+        'reconciliation and IS456 strip arithmetic, not a staircase OpenSees '
+        'simulation, approved load path or construction design. The assumed '
+        'cover, effective span, landings, supports, seismic actions, shear, '
+        'deflection and anchorage require physical-project verification. '
+        'IS456 §33.1–33.3 apply to actual support and load models. '
+        'The original F3 footing remains NOT SAFE.</div>'),
     ]
     toc='<nav class="toc"><b>TABLE OF CONTENTS</b>'+''.join(
       f'<a href="#{key}">{e(label)}</a>' for key,label,_ in chapters)+'</nav>'
@@ -382,6 +412,9 @@ def build(out:Path=Path("site")):
     verification=column_benchmark()
     f3=f3_study()
     slab=slab_from_opensees(solved)
+    stair=staircase_review()
+    (data/"staircase-source-review.json").write_text(json.dumps(stair,indent=2,
+         sort_keys=True,allow_nan=False)+"\n")
     (data/"slab-benchmark.json").write_text(json.dumps(
         slab["published_oneway_nptel_benchmark"],indent=2,
         sort_keys=True,allow_nan=False)+"\n")
@@ -401,6 +434,7 @@ def build(out:Path=Path("site")):
       "column_capacity_verification":verification,
       "f3_proposed_concentric_redesign_study":f3,
       "slab_reinforcement_screen":slab,
+      "staircase_source_reconciliation":stair,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -522,7 +556,7 @@ def build(out:Path=Path("site")):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification,f3,slab)}
+           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
@@ -551,6 +585,10 @@ def verify(out:Path):
     assert result["original_narayani_F3_NOT_SAFE"]
     assert result["slab_reinforcement_screen"]["rows_count"]==496
     assert result["slab_reinforcement_screen"]["shell_cells"]==31
+    assert not result["staircase_source_reconciliation"]["engineering_approval"]
+    assert result["staircase_source_reconciliation"]["report_moment_normalization_unresolved"]
+    assert "6.5 Narayani staircase" in (out/"report.html").read_text()
+    assert (out/"data/staircase-source-review.json").exists()
     assert not result["slab_reinforcement_screen"]["engineering_approval"]
     assert not result["slab_reinforcement_screen"]["actual_project_slab_geometry_and_rebar_verified"]
     assert result["f3_proposed_concentric_redesign_study"]["historical_not_safe_preserved"]
