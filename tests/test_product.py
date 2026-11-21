@@ -37,6 +37,12 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert stair["engineering_approval"] is False
   assert (dest/"data/staircase-source-review.json").exists()
   assert "6.5 Narayani staircase" in (dest/"report.html").read_text()
+  bm=stair["published_nptel_stair_waist_section_benchmark"]
+  assert bm["within_predeclared_1pct_research_band"]
+  assert bm["source_required_steel_mm2_m"]==pytest.approx(920.64)
+  assert bm["independent_required_steel_mm2_m"]==pytest.approx(921.2607899924,abs=.001)
+  assert not bm["engineering_approval"]
+  assert "6.5.1 External NPTEL staircase" in (dest/"report.html").read_text()
   assert "1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in (dest/"report.html").read_text()
   assert "1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in (dest/"more.html").read_text()
   assert "6.4 Slab reinforcement" in (dest/"report.html").read_text()
