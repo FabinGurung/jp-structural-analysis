@@ -108,6 +108,8 @@ jobs:
               assert stair["report_moment_normalization_unresolved"]
               assert not stair["staircase_present_in_active_opensees_reference_model"]
               assert b"6.5 Narayani staircase" in get("report.html")
+              assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("report.html")
+              assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("more.html")
               assert json.loads(get("data/staircase-source-review.json"))["engineering_approval"] is False
 
               assert len(get("data/slab-checks.csv").splitlines())==497
