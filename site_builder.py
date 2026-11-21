@@ -398,16 +398,6 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
         'tread and worked waist depth. The report moment may apply to the full '
         '1.2m flight rather than a one-metre strip. Both interpretations remain held.</p>'
         +stair_table+
-        '<h3>6.5.2 Original drawing geometry and support verification</h3>'
-        '<p>A visual readback of drawing STR-16 (physical PDF page 16) establishes '
-        'the 4,965 by 4,275mm C–D / 1–2 column-grid bay, three drawn flight '
-        'details, and specific 720mm end-region notes. None is a confirmed '
-        'flight effective span or a supported complete staircase FEM mesh.</p>'
-        +stair_geometry_table+
-        '<p>'+A('data/staircase-geometry.json','Source-verified geometry and support hold register')
-        +'. The initial structural OpenSees model has no actual staircase; '
-        'the new physical-model gate refuses missing support coordinates, '
-        'landing polygons, restraints, load paths and load combinations.</p>'
         '<h3>6.5.1 External NPTEL staircase reinforcement benchmark</h3>'
         '<p>The IIT Kharagpur Lesson 20 Example 9.1 waist-slab has a published '
         '102.08 kN·m for a 1.5m full-width staircase and an effective depth '
@@ -420,6 +410,16 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
         +A(stair_bm["source"],'Read published IIT Kharagpur staircase example')
         +'. This checks isolated section reinforcement only, not the physical '
         'staircase loading, landing support, full-span solution or Narayani.</p>'
+        '<h3>6.5.2 Original drawing geometry and support verification</h3>'
+        '<p>A visual readback of drawing STR-16 (physical PDF page 16) establishes '
+        'the 4,965 by 4,275mm C–D / 1–2 column-grid bay, three drawn flight '
+        'details, and specific 720mm end-region notes. None is a confirmed '
+        'flight effective span or a supported complete staircase FEM mesh.</p>'
+        +stair_geometry_table+
+        '<p>'+A('data/staircase-geometry.json','Source-verified geometry and support hold register')
+        +'. The initial structural OpenSees model has no actual staircase; '
+        'the new physical-model gate refuses missing support coordinates, '
+        'landing polygons, restraints, load paths and load combinations.</p>'
         '<p>'+A('data/staircase-source-review.json','Read full staircase arithmetic and unresolved holds')
         +' · '+A(STAIR_QA_DOC,'Full R6.37 staircase research QA (Drive)')
         +' · '+A(stair_drawing['source'],'Original July 2026 drawing')
