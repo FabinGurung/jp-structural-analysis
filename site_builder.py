@@ -19,6 +19,7 @@ from r6p30.column_validation import compute as column_benchmark
 from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
 from r6p30.slab_design import from_opensees as slab_from_opensees
 from r6p30.staircase_review import review as staircase_review
+from r6p30.staircase_loads import audit as staircase_load_audit
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 SLAB_ARCHIVE="https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn"
 SLAB_QA_PDF="https://drive.google.com/file/d/1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG/view"
@@ -97,7 +98,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification,f3,slab,stair):
+def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -133,6 +134,22 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
       ("Actual support XYZ and continuity","Unverified — model gate closed"),
       ("Source-reconciled staircase FEM","Not built — no actual OpenSees staircase results")])
     stair_bm=stair["published_nptel_stair_waist_section_benchmark"]
+    stair_work=stair_load["report_170_254_worksheet_reconstruction"]
+    stair_load_table=table(("Original staircase worksheet","Independent readback / status"),[
+      ("Flight step + waist + finish cross-section",
+        n(stair_work["source_cell_area_reconstruction_m2_per_m_width"]["total"])+" m², inferred finish face geometry"),
+      ("Flight dead load",n(stair_work["flight_deadload_from_reconstructed_section_kPa"])+" kN/m² (report 8.41)"),
+      ("Report stair live load",n(stair_work["flight_live_kPa"])+" kN/m²"),
+      ("Worksheet 1.5(DL+LL)",n(stair_work["flight_worksheet_factor_1p5_DL_plus_LL_kPa"])+" kN/m²"),
+      ("Report §2.8.1: 1.2DL+1.5LL",
+        n(stair_work["flight_report_declared_1p2_DL_plus_1p5_LL_kPa"])+" kN/m² (comparison, not approved governing)"),
+      ("Unresolved factored-load discrepancy",n(stair_load["flight_combo_difference_kPa"])+" kN/m²"),
+      ("Landing worksheet dead + live",n(stair_work["landing_service_kPa"])+" kN/m²"),
+      ("Landing worksheet factored",n(stair_work["landing_worksheet_factor_1p5_DL_plus_LL_kPa"])+" kN/m²"),
+      ("Building occupancy evidence",
+        "Drawing: Residential+Commercial; analysis report: Residential — resolve"),
+      ("Flight spans, support moments and reactions",
+        "Not verified; no physical staircase FE solve or construction approval")])
     stair_table=table(("Staircase source comparison","Readback or independently calculated value"),[
       ("Riser / tread — drawing",n(stair_drawing["riser_mm"])+" / "+n(stair_drawing["tread_mm"])+" mm"),
       ("Riser / tread — report",n(stair_source["riser_mm"])+" / "+n(stair_source["tread_mm"])+" mm"),
@@ -420,6 +437,17 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
         +'. The initial structural OpenSees model has no actual staircase; '
         'the new physical-model gate refuses missing support coordinates, '
         'landing polygons, restraints, load paths and load combinations.</p>'
+        '<h3>6.5.3 Staircase load worksheet — independent numerical reconciliation</h3>'
+        '<p>The revised report staircase worksheet can be reproduced from its '
+        '170mm riser, 254mm tread, 150mm waist and 50.8mm finish assumptions. '
+        'The finish cross-sectional area is reconstructed from horizontal '
+        'and vertical faces rather than independently field-verified. '
+        'A separate report section lists a different load-factor combination; '
+        'neither case is selected as the actual building design basis.</p>'
+        +stair_load_table+
+        '<p>'+A('data/staircase-worksheet-loads.json','Review full numeric calculations and unresolved code/occupancy holds')
+        +' · '+A(stair_load["code_references_for_qualified_engineer"]["NBC_105_2025_government"],
+         'Nepal government building-code register')+'.</p>'
         '<p>'+A('data/staircase-source-review.json','Read full staircase arithmetic and unresolved holds')
         +' · '+A(STAIR_QA_DOC,'Full R6.37 staircase research QA (Drive)')
         +' · '+A(stair_drawing['source'],'Original July 2026 drawing')
@@ -452,6 +480,9 @@ def build(out:Path=Path("site")):
     f3=f3_study()
     slab=slab_from_opensees(solved)
     stair=staircase_review()
+    stair_load=staircase_load_audit()
+    (data/"staircase-worksheet-loads.json").write_text(json.dumps(stair_load,
+        indent=2,sort_keys=True,allow_nan=False)+"\n")
     (data/"staircase-geometry.json").write_text(json.dumps(
         stair["source_geometry_and_support_gate"],indent=2,
         sort_keys=True,allow_nan=False)+"\n")
@@ -477,6 +508,7 @@ def build(out:Path=Path("site")):
       "f3_proposed_concentric_redesign_study":f3,
       "slab_reinforcement_screen":slab,
       "staircase_source_reconciliation":stair,
+      "staircase_worksheet_load_reconciliation":stair_load,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -600,7 +632,7 @@ def build(out:Path=Path("site")):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair)}
+           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair,stair_load)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
@@ -635,6 +667,12 @@ def verify(out:Path):
     assert not result["staircase_source_reconciliation"]["published_nptel_stair_waist_section_benchmark"]["engineering_approval"]
     assert "6.5 Narayani staircase" in (out/"report.html").read_text()
     assert "6.5.2 Original drawing geometry" in (out/"report.html").read_text()
+    assert "6.5.3 Staircase load worksheet" in (out/"report.html").read_text()
+    loads=result["staircase_worksheet_load_reconciliation"]
+    assert loads["source_numbers_reproduced_with_printed_precision"]
+    assert loads["flight_combo_difference_kPa"]>2.
+    assert not loads["engineering_approval"]
+    assert (out/"data/staircase-worksheet-loads.json").exists()
     geo=result["staircase_source_reconciliation"]["source_geometry_and_support_gate"]
     assert geo["original_drawing"]["drawing_sheet_label"]=="STR-16"
     assert geo["grid_bay_is_not_FEM_effective_span"]
