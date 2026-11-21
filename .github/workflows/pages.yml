@@ -115,6 +115,13 @@ jobs:
               assert not bm["engineering_approval"]
               assert b"6.5.1 External NPTEL staircase" in get("report.html")
               assert b"6.5.2 Original drawing geometry" in get("report.html")
+              assert b"6.5.3 Staircase load worksheet" in get("report.html")
+              loads=json.loads(get("data/staircase-worksheet-loads.json"))
+              assert loads["source_numbers_reproduced_with_printed_precision"]
+              assert 2 < loads["flight_combo_difference_kPa"] < 3
+              assert not loads["engineering_approval"]
+              assert loads["occupancy_description_conflict"]["applicable_imposed_load_and_permit_occupancy_unresolved"]
+              assert result["staircase_worksheet_load_reconciliation"]["schema"]==loads["schema"]
               geom=json.loads(get("data/staircase-geometry.json"))
               assert geom["original_drawing"]["drawing_sheet_label"]=="STR-16"
               assert geom["original_drawing"]["pdf_page_1_based"]==16
