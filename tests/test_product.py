@@ -38,6 +38,13 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert (dest/"data/staircase-source-review.json").exists()
   assert "6.5 Narayani staircase" in (dest/"report.html").read_text()
   assert "6.5.2 Original drawing geometry" in (dest/"report.html").read_text()
+  load=data["staircase_worksheet_load_reconciliation"]
+  assert "6.5.3 Staircase load worksheet" in (dest/"report.html").read_text()
+  assert load["source_numbers_reproduced_with_printed_precision"]
+  assert load["flight_combo_difference_kPa"]>2
+  assert load["occupancy_description_conflict"]["applicable_imposed_load_and_permit_occupancy_unresolved"]
+  assert not load["engineering_approval"]
+  assert (dest/"data/staircase-worksheet-loads.json").exists()
   geo=stair["source_geometry_and_support_gate"]
   assert geo["original_drawing"]["drawing_sheet_label"]=="STR-16"
   assert geo["original_drawing"]["pdf_page_1_based"]==16
