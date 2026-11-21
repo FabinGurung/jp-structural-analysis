@@ -450,9 +450,9 @@ def build(out:Path=Path("site")):
           f'<div class="tile"><b>{A("more.html","Resources")}</b><p>Retrievable full historical archive in Google Drive and original reference files.</p></div></div>')+
        box("Current engine capabilities",
          '<p><strong>Working:</strong> elastic slab/frame FE, member forces and reactions, '
-         'reusable isolated beam flexure/shear, and bounded approximate column P–M–M.'
+         'beam flexure/shear, approximate column P–M–M and new ShellMITC4 slab reinforcement screens.'
          ' <strong>Not yet complete:</strong> seismic design verification, detailed slabs,'
-         ' footings, stairs, ductile detailing and signed construction drawings.</p>'
+         ' final slab detailing/deflection, footings, stairs, ductile detailing and signed drawings.</p>'
          '<div class="meta"><span>4 clean site sections</span><span>1 report</span>'
          '<span>2 active numerical design checks</span></div>'))
     studio=page("Studio Standard","One project sequence; use the original sources as authority.",
@@ -509,7 +509,8 @@ def build(out:Path=Path("site")):
          f'<p>{A("report.html","Working six-chapter report")} · '
          f'{A("data/report-results.json","Reproducible current calculations")}'
          f' · {A("data/beam-checks.csv","Beam design evidence")}'
-         f' · {A("data/column-pmm-checks.csv","Column P–M–M evidence")}</p>'
+         f' · {A("data/column-pmm-checks.csv","Column P–M–M evidence")}'
+         f' · {A("data/slab-checks.csv","Slab bending and transverse-shear evidence")}</p>'
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
