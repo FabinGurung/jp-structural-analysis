@@ -37,6 +37,15 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert stair["engineering_approval"] is False
   assert (dest/"data/staircase-source-review.json").exists()
   assert "6.5 Narayani staircase" in (dest/"report.html").read_text()
+  assert "6.5.2 Original drawing geometry" in (dest/"report.html").read_text()
+  geo=stair["source_geometry_and_support_gate"]
+  assert geo["original_drawing"]["drawing_sheet_label"]=="STR-16"
+  assert geo["original_drawing"]["pdf_page_1_based"]==16
+  assert geo["original_drawing"]["grid_bay_C_to_D_mm"]==4965.
+  assert geo["grid_bay_is_not_FEM_effective_span"]
+  assert geo["actual_staircase_model_ready"] is False
+  assert geo["engineering_approval"] is False
+  assert (dest/"data/staircase-geometry.json").exists()
   bm=stair["published_nptel_stair_waist_section_benchmark"]
   assert bm["within_predeclared_1pct_research_band"]
   assert bm["source_required_steel_mm2_m"]==pytest.approx(920.64)

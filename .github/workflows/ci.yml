@@ -16,4 +16,4 @@ jobs:
       - name: Install pinned OpenSeesPy and tests
         run: python -m pip install -r requirements.txt
       - name: Verify actual OpenSees calculations and beam/column design checks
-        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py tests/test_product.py
+        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py tests/test_product.py
