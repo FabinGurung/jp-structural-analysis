@@ -533,6 +533,8 @@ def solve_case(spec: dict, case: str, mode: str = "FLEXIBLE_SHELL",
                 abs(float(values[2])) + abs(float(values[8]))
             )
     shell_nodal_resisting_forces = {}
+    shell_gauss_section_resultants = {}
+    section_names = ("p11","p22","p12","m11","m22","m12","q1","q2")
     for cell, tag in tags_shell.items():
         response = ops.eleResponse(tag, "forces")
         require(response is not None and len(response) == 24 and
@@ -540,6 +542,18 @@ def solve_case(spec: dict, case: str, mode: str = "FLEXIBLE_SHELL",
                 "ShellMITC4 24-DOF resisting-force vector missing")
         label = f"L{cell[0]}:CELL:{cell[1]}:{cell[2]}"
         shell_nodal_resisting_forces[label] = [float(x) for x in response]
+        # ShellMITC4 'stresses' are 4 independent Gauss POINT section
+        # resultants per cell. Not the above nodal resisting-force vector.
+        # Each 8-vector: p11,p22,p12,m11,m22,m12,q1,q2.
+        # kN/m and kN.m/m with global model (kN, m) units.
+        resultants = ops.eleResponse(tag, "stresses")
+        require(resultants is not None and len(resultants) == 32 and
+                all(math.isfinite(float(x)) for x in resultants),
+                "ShellMITC4 four 8-component Gauss section resultants missing")
+        shell_gauss_section_resultants[label] = [
+            dict(zip(section_names, map(float,resultants[8*i:8*(i+1)])))
+            for i in range(4)
+        ]
     displacements = {}
     for fl, nodes in top["floor_nodes"].items():
         values = {node_id(*key): [float(ops.nodeDisp(tags[key], j))
@@ -583,6 +597,9 @@ def solve_case(spec: dict, case: str, mode: str = "FLEXIBLE_SHELL",
         "force_moment_balance_pass": True,
         "signed_frame_end_actions": frame_end,
         "shell_nodal_resisting_force_vectors": shell_nodal_resisting_forces,
+        "shell_gauss_section_resultants": shell_gauss_section_resultants,
+        "shell_section_resultant_format": "4 x [p11,p22,p12,m11,m22,m12,q1,q2]",
+        "shell_section_resultant_unit": "moments kN.m/m; shear kN/m",
         "shell_to_beam_directional_vz_abs_sum": direction_abs_vz,
         "floor_max_vertical_displacement_m": {
             str(fl): max(abs(vec[2]) for vec in values.values())
