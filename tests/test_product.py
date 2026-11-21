@@ -31,6 +31,9 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert (dest/"data/slab-benchmark.json").exists()
   assert "6.4 Slab reinforcement" in (dest/"report.html").read_text()
   assert "Slab bending and transverse-shear evidence" in (dest/"more.html").read_text()
+  assert "https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn" in (dest/"more.html").read_text()
+  assert "https://drive.google.com/file/d/1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG/view" in (dest/"more.html").read_text()
+  assert "Full slab QA engineering review in Drive" in (dest/"report.html").read_text()
 
   assert not data["original_project_engineering_approval"]
   assert data["original_narayani_F3_NOT_SAFE"]
