@@ -378,6 +378,10 @@ def build(out:Path=Path("site")):
     spec,solved,beam,col=read_actual_solver()
     verification=column_benchmark()
     f3=f3_study()
+    slab=slab_from_opensees(solved)
+    (data/"slab-benchmark.json").write_text(json.dumps(
+        slab["published_oneway_nptel_benchmark"],indent=2,
+        sort_keys=True,allow_nan=False)+"\n")
     (data/"f3-trial.json").write_text(json.dumps(f3,indent=2,
         sort_keys=True,allow_nan=False)+"\n")
     (data/"column-verification.json").write_text(json.dumps(verification,indent=2,
@@ -393,6 +397,7 @@ def build(out:Path=Path("site")):
       "beam_checks":beam,"column_pmm_checks":col,
       "column_capacity_verification":verification,
       "f3_proposed_concentric_redesign_study":f3,
+      "slab_reinforcement_screen":slab,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -416,6 +421,26 @@ def build(out:Path=Path("site")):
           r["PMM"]["My1_approx_capacity_kNm"],r["PMM"]["Mz1_approx_capacity_kNm"],
           r["PMM"].get("biaxial_exponent_alpha"),r["PMM"].get("minimum_eccentricity_governing"),r["PMM"]["biaxial_load_contour_utilization"],
           r["PMM"]["status"]) for r in col["rows"]])
+    write_csv(data/"slab-checks.csv",
+        ("mode","combination","cell","floor","gauss","axis","face",
+         "signed_M11","signed_M22","signed_M12","signed_Q1","signed_Q2",
+         "WoodArmer_Mu_kNm_m","As_required_with_min_mm2_m","As_provided_mm2_m",
+         "M_provided_kNm_m","bending_status","shear_tau_v_MPa","shear_tau_c_MPa",
+         "shear_ok","real_building_sign_validated"),
+        [(x["mode"],x["combination"],x["cell"],x["floor"],x["gauss"],
+          x["direction"],x["face"],
+          *x["shell_original_signed_m11_m22_m12_kNm_m"],
+          *x["shell_original_signed_q1_q2_kN_m"],
+          x["design_moment_WoodArmer_assumed_kNm_m"],
+          x["bending"]["As_required_with_min_mm2_m"],
+          x["bending"]["As_provided_mm2_m"],
+          x["bending"]["M_provided_capacity_kNm_m"],
+          x["bending"]["status"],
+          x["transverse_shear"]["tau_v_MPa"],
+          x["transverse_shear"]["tau_c_slab_MPa"],
+          x["transverse_shear"]["isolated_transverse_shear_ok"],
+          x["actual_top_bottom_sign_validated_in_real_structure"])
+         for x in slab["rows"]])
     home=page("Structural Analysis",
        "A simple working studio: review your building and generate a reproducible structural report.",
        box("Start here",'<div class="grid">'+
@@ -488,12 +513,13 @@ def build(out:Path=Path("site")):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification,f3)}
+           "report.html":report(spec,solved,beam,col,verification,f3,slab)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
       "original_engineering_approval":False,
       "beam_rows":beam["rows_count"],"column_rows":col["row_count"],
+      "slab_rows":slab["rows_count"],
       "source_sha256":model_digest(spec),
       "files_sha256":{
        p.relative_to(out).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
@@ -506,6 +532,7 @@ def build(out:Path=Path("site")):
 def verify(out:Path):
     receipt=json.loads((out/"receipt.json").read_text())
     assert receipt["beam_rows"]==256 and receipt["column_rows"]==64
+    assert receipt["slab_rows"]==496
     assert len(receipt["pages"])==5 and len(NAV)==4
     assert (out/"more.html").read_text().count(DRIVE_ARCHIVE)>=1
     assert "6.0 Design of Structural Elements" in (out/"report.html").read_text()
@@ -513,6 +540,10 @@ def verify(out:Path):
     assert "NOT SAFE" in (out/"projects.html").read_text()
     result=json.loads((out/"data/report-results.json").read_text())
     assert result["original_narayani_F3_NOT_SAFE"]
+    assert result["slab_reinforcement_screen"]["rows_count"]==496
+    assert result["slab_reinforcement_screen"]["shell_cells"]==31
+    assert not result["slab_reinforcement_screen"]["engineering_approval"]
+    assert not result["slab_reinforcement_screen"]["actual_project_slab_geometry_and_rebar_verified"]
     assert result["f3_proposed_concentric_redesign_study"]["historical_not_safe_preserved"]
     assert result["f3_proposed_concentric_redesign_study"]["preferred_uniform_revision_550mm"]["listed_concentric_checks_pass"]
     assert not result["f3_proposed_concentric_redesign_study"]["approved_for_construction"]
@@ -526,6 +557,8 @@ def verify(out:Path):
         assert hashlib.sha256((out/file).read_bytes()).hexdigest()==sha,file
     with (out/"data/beam-checks.csv").open(newline="") as fp:
         assert sum(1 for _ in csv.reader(fp))==257
+    with (out/"data/slab-checks.csv").open(newline="") as fp:
+        assert sum(1 for _ in csv.reader(fp))==497
     with (out/"data/column-pmm-checks.csv").open(newline="") as fp:
         assert sum(1 for _ in csv.reader(fp))==65
     return receipt
