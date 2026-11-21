@@ -114,6 +114,16 @@ jobs:
               assert bm["source_required_steel_mm2_m"]==920.64
               assert not bm["engineering_approval"]
               assert b"6.5.1 External NPTEL staircase" in get("report.html")
+              assert b"6.5.2 Original drawing geometry" in get("report.html")
+              geom=json.loads(get("data/staircase-geometry.json"))
+              assert geom["original_drawing"]["drawing_sheet_label"]=="STR-16"
+              assert geom["original_drawing"]["pdf_page_1_based"]==16
+              assert geom["grid_bay_is_not_FEM_effective_span"]
+              assert geom["original_drawing"]["grid_bay_C_to_D_mm"]==4965
+              assert geom["original_drawing"]["grid_bay_1_to_2_mm"]==4275
+              assert not geom["actual_staircase_model_ready"]
+              assert not geom["engineering_approval"]
+              assert result["staircase_source_reconciliation"]["source_geometry_and_support_gate"]["schema"]==geom["schema"]
               assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("report.html")
               assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("more.html")
               assert json.loads(get("data/staircase-source-review.json"))["engineering_approval"] is False
