@@ -19,6 +19,8 @@ from r6p30.column_validation import compute as column_benchmark
 from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
 from r6p30.slab_design import from_opensees as slab_from_opensees
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
+SLAB_ARCHIVE="https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn"
+SLAB_QA_PDF="https://drive.google.com/file/d/1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG/view"
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
 ORIGINAL_REPORT="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -334,7 +336,8 @@ def report(spec,solved,beam,col,verification,f3,slab):
         'remains an explicit source-review assumption.</p>'
         +slab_table+
         '<p>'+A('data/slab-checks.csv','Download all slab design screens (CSV)')+
-        ' · '+A('data/slab-benchmark.json','Read independent benchmark values (JSON)')+'.</p>'
+        ' · '+A('data/slab-benchmark.json','Read independent benchmark values (JSON)')+
+        ' · '+A(SLAB_QA_PDF,'Full slab QA engineering review in Drive')+'.</p>'
         '<h3>6.4.1 Published NPTEL one-way slab benchmark</h3>'
         '<p>IIT Kharagpur Lesson 18 TQ3: 175mm slab, 150mm effective depth, '
         '3.5m simply supported one-way span, M20 Fe415, 1kPa finish '
@@ -491,13 +494,18 @@ def build(out:Path=Path("site")):
           '<p>Original source repository, full Git history bundle, source checksum manifest, '
           'previous published website, responsive screenshots and source-design QA. '
           'These experimental files are not in the active website.</p></div>')+
-       box("Current verification and F3 redesign study",
+       box("Current engineering verification studies",
           f'<p>{A(F3_PDF,"R6.35 engineer-review PDF — F3 footing and expanded SP16 verification")} '
           f' · {A(F3_ARCHIVE,"Original calculations and full 720-case study in Drive")}</p>'
           '<p>The 550mm uniform F3 option is only a conditional proposal; '
           'the original F3 failure remains in the historic record. '
           'The expanded SP16 work compares 13 published reference values and '
-          '720 internal mesh checks, but is not formal full-chart certification.</p>')+
+          '720 internal mesh checks, but is not formal full-chart certification.</p>'
+          f'<p>{A(SLAB_QA_PDF,"Slab Gauss and reinforcement numerical QA (PDF)")}'
+          f' · {A(SLAB_ARCHIVE,"Retrieve full slab research and source snapshot in Drive")}</p>'
+          '<p>The slab study tests a synthetic 120mm model. It does not '
+          'replace the original Narayani slab reinforcement drawing or its '
+          'professional review and construction approval.</p>')+
        box("Original sources",
          f'<p>{A(ORIGINAL_REPORT,"Revised original structural PDF")}'
          f' · {A(ORIGINAL_DRAWING,"Structural drawings")} '

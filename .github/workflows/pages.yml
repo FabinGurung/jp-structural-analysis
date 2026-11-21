@@ -101,6 +101,9 @@ jobs:
               assert slab["published_oneway_nptel_benchmark"]["computed_analytic_Mu_kNm_m"]>21.53
               assert slab["published_oneway_nptel_benchmark"]["our_relative_chart_capacity_difference"]<-.03
               assert b"6.4 Slab reinforcement" in get("report.html")
+              assert b"1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn" in get("more.html")
+              assert b"1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG" in get("report.html")
+
               assert len(get("data/slab-checks.csv").splitlines())==497
               assert json.loads(get("data/slab-benchmark.json"))["construction_approval"] is False
 
