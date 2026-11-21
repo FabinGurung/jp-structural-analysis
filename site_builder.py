@@ -22,6 +22,7 @@ from r6p30.staircase_review import review as staircase_review
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 SLAB_ARCHIVE="https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn"
 SLAB_QA_PDF="https://drive.google.com/file/d/1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG/view"
+STAIR_QA_DOC="https://docs.google.com/document/d/1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90/edit"
 
 DRIVE_ARCHIVE="https://drive.google.com/drive/folders/1ViudVSKVdDr7OPl-xFjJTankIDAEQJoO"
 ORIGINAL_REPORT="https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -383,6 +384,7 @@ def report(spec,solved,beam,col,verification,f3,slab,stair):
         '1.2m flight rather than a one-metre strip. Both interpretations remain held.</p>'
         +stair_table+
         '<p>'+A('data/staircase-source-review.json','Read full staircase arithmetic and unresolved holds')
+        +' · '+A(STAIR_QA_DOC,'Full R6.37 staircase research QA (Drive)')
         +' · '+A(stair_drawing['source'],'Original July 2026 drawing')
         +' · '+A(stair_source['source'],'Revised structural report')+'.</p>'
         '<div class="note"><strong>ENGINEERING HOLD.</strong> This is only a source '
@@ -537,6 +539,8 @@ def build(out:Path=Path("site")):
           '720 internal mesh checks, but is not formal full-chart certification.</p>'
           f'<p>{A(SLAB_QA_PDF,"Slab Gauss and reinforcement numerical QA (PDF)")}'
           f' · {A(SLAB_ARCHIVE,"Retrieve full slab research and source snapshot in Drive")}</p>'
+          f'<p>{A(STAIR_QA_DOC,"R6.37 staircase source/reinforcement QA (Drive)")} — '
+          'independent arithmetic and open engineering holds; not construction approved.</p>'
           '<p>The slab study tests a synthetic 120mm model. It does not '
           'replace the original Narayani slab reinforcement drawing or its '
           'professional review and construction approval.</p>')+
@@ -589,6 +593,8 @@ def verify(out:Path):
     assert result["staircase_source_reconciliation"]["report_moment_normalization_unresolved"]
     assert "6.5 Narayani staircase" in (out/"report.html").read_text()
     assert (out/"data/staircase-source-review.json").exists()
+    assert STAIR_QA_DOC in (out/"report.html").read_text()
+    assert STAIR_QA_DOC in (out/"more.html").read_text()
     assert not result["slab_reinforcement_screen"]["engineering_approval"]
     assert not result["slab_reinforcement_screen"]["actual_project_slab_geometry_and_rebar_verified"]
     assert result["f3_proposed_concentric_redesign_study"]["historical_not_safe_preserved"]

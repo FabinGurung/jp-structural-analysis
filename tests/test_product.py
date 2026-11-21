@@ -37,6 +37,8 @@ def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   assert stair["engineering_approval"] is False
   assert (dest/"data/staircase-source-review.json").exists()
   assert "6.5 Narayani staircase" in (dest/"report.html").read_text()
+  assert "1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in (dest/"report.html").read_text()
+  assert "1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in (dest/"more.html").read_text()
   assert "6.4 Slab reinforcement" in (dest/"report.html").read_text()
   assert "Slab bending and transverse-shear evidence" in (dest/"more.html").read_text()
   assert "https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn" in (dest/"more.html").read_text()
