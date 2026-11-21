@@ -22,7 +22,7 @@ jobs:
       - name: Install pinned runtime
         run: python -m pip install -r requirements.txt
       - name: Verify independent beam/column equations and actual OpenSees solve
-        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py tests/test_product.py
+        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py tests/test_product.py
       - name: Generate only four main pages and one structural report
         run: |
           python site_builder.py
@@ -103,6 +103,12 @@ jobs:
               assert b"6.4 Slab reinforcement" in get("report.html")
               assert b"1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn" in get("more.html")
               assert b"1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG" in get("report.html")
+              stair=result["staircase_source_reconciliation"]
+              assert not stair["engineering_approval"]
+              assert stair["report_moment_normalization_unresolved"]
+              assert not stair["staircase_present_in_active_opensees_reference_model"]
+              assert b"6.5 Narayani staircase" in get("report.html")
+              assert json.loads(get("data/staircase-source-review.json"))["engineering_approval"] is False
 
               assert len(get("data/slab-checks.csv").splitlines())==497
               assert json.loads(get("data/slab-benchmark.json"))["construction_approval"] is False
