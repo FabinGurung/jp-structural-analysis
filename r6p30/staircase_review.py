@@ -12,6 +12,7 @@ support condition, landing redistribution, deflection or actual loads.
 from __future__ import annotations
 
 import math
+from r6p30.staircase_geometry import observed_geometry_review
 
 DRAWING = "https://drive.google.com/file/d/1zwmKrfwW9IN5ourLGFdfleJOCi7dcH2_/view"
 REVISED_REPORT = "https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view"
@@ -123,9 +124,9 @@ def published_nptel_staircase_benchmark():
 
 def review():
     """Source-led numerical audit; moments/support paths are not design-approved."""
-    # Text extracted from July 2026 structural drawing, staircase sheet 15.
+    # Visually reviewed July 2026 original structural PDF page 16, sheet STR-16.
     drawing = {
-        "source": DRAWING, "source_sheet": "STR-15, July 2026",
+        "source": DRAWING, "source_sheet": "STR-16, July 2026",
         "riser_mm": 180., "tread_mm": 255., "waist_D_mm": 150.,
         "main_bar_diameter_mm": 12., "main_spacing_mm": 125.,
         "distribution_bar_diameter_mm": 8., "distribution_spacing_mm": 150.,
@@ -205,9 +206,12 @@ def review():
             "LANDING_AND_STAIRCASE_NOT_IN_SYNTHETIC_OPENSEES_MODEL",
             "REAL_SITE_ACTION_COMBINATIONS_SHEAR_DEFLECTION_CRACKING_AND_ANCHORAGE_UNCHECKED",
             "COMPLETE_STAIRCASE_AND_LANDING_FEM_EXTERNAL_BENCHMARK_PENDING",
-            "DRAWING_PDF_SHEET_VISUAL_VALIDATION_PENDING",
+            "DETAILED_STAIR_SUPPORT_AND_LANDING_COORDINATES_PENDING",
             "F3_ORIGINAL_NOT_SAFE_REMAINS_OPEN",
         ],
+        "source_geometry_and_support_gate": observed_geometry_review(),
+        "resolved_evidence_items": ["STR-16_DRAWING_PAGE_VISUAL_READBACK",
+                                    "STR15_SHEET_MISIDENTIFICATION_CORRECTED"],
         "published_nptel_stair_waist_section_benchmark":
             published_nptel_staircase_benchmark(),
         "staircase_present_in_active_opensees_reference_model": False,
