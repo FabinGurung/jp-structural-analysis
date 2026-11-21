@@ -41,10 +41,10 @@ def flexural_strip(*, mu_kNm_m, D_mm, d_mm, bar_diameter_mm,
     fck = finite(fck_MPa, "concrete grade")
     fy = finite(fy_MPa, "steel grade")
     if not (d < D and phi < s and phi <= D / 8 and fck in (20., 25.)
-            and fy == 500.):
+            and fy in (415., 500.)):
         raise ValueError("STAIRCASE HOLD: geometry, bar diameter or material scope")
     b = 1000.
-    xulim = .46 * d
+    xulim = (.48 if fy == 415. else .46) * d
     Mlim = .36 * fck * b * xulim * (d - .42*xulim) / 1e6
     As = math.pi * phi**2 / 4 * (1000. / s)
     As_min = .0012 * b * D
@@ -79,6 +79,45 @@ def flexural_strip(*, mu_kNm_m, D_mm, d_mm, bar_diameter_mm,
         "bounded_section_flexure_ok": bool(ok),
         "status": "BOUNDED_SECTION_SCREEN_ONLY" if ok else "SECTION_HOLD",
         "engineering_approval": False,
+    }
+
+
+def published_nptel_staircase_benchmark():
+    """IIT Kharagpur NPTEL Lesson 20 Example 9.1, stair waist only.
+
+    Published 102.08 kN.m is the 1.5m full-width flight moment, NOT a
+    one-metre strip moment. Published steel area is 920.64 mm2 per metre.
+    Compare independent IS456 strain-block quadratic using declared d=224,
+    D=250, M20/Fe415 and provided 12mm @120. Never use these values for
+    Narayani nor assert validated entire longitudinal staircase load path.
+    """
+    source="https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m9l20.pdf"
+    width_m=1.5
+    source_Mu_kNm=102.08
+    source_As_mm2_m=920.64
+    x=flexural_strip(
+        mu_kNm_m=source_Mu_kNm/width_m,D_mm=250,d_mm=224,
+        bar_diameter_mm=12,bar_spacing_mm=120,fck_MPa=20,fy_MPa=415)
+    deviation=(x["As_required_mm2_per_m"]-source_As_mm2_m)/source_As_mm2_m
+    return {
+        "source":source,
+        "source_organization":"IIT Kharagpur / NPTEL",
+        "source_lesson":"Lesson 20 Example 9.1, waist slab reinforcement",
+        "source_total_factored_moment_kNm_for_1p5m_width":source_Mu_kNm,
+        "source_waist_width_m":width_m,
+        "moment_normalized_kNm_per_m":source_Mu_kNm/width_m,
+        "source_effective_depth_mm":224.,
+        "source_waist_overall_depth_mm":250.,
+        "source_fck_MPa":20.,"source_fy_MPa":415.,
+        "source_required_steel_mm2_m":source_As_mm2_m,
+        "independent_required_steel_mm2_m":x["As_required_mm2_per_m"],
+        "independent_provided_steel_mm2_m":x["As_provided_mm2_per_m"],
+        "relative_stress_block_vs_SP16_difference":deviation,
+        "within_predeclared_1pct_research_band":abs(deviation)<.01,
+        "independent_bar_section_screen_ok":x["bounded_section_flexure_ok"],
+        "not_complete_staircase_loading_or_reactions_benchmark":True,
+        "not_a_Narayani_building_design":True,
+        "engineering_approval":False,
     }
 
 
@@ -165,10 +204,12 @@ def review():
             "FLIGHT_LANDING_SPANS_BOUNDARIES_SUPPORT_STRIPS_AND_LOAD_PATH_UNKNOWN",
             "LANDING_AND_STAIRCASE_NOT_IN_SYNTHETIC_OPENSEES_MODEL",
             "REAL_SITE_ACTION_COMBINATIONS_SHEAR_DEFLECTION_CRACKING_AND_ANCHORAGE_UNCHECKED",
-            "EXTERNAL_PUBLISHED_STAIRCASE_BENCHMARK_PENDING",
+            "COMPLETE_STAIRCASE_AND_LANDING_FEM_EXTERNAL_BENCHMARK_PENDING",
             "DRAWING_PDF_SHEET_VISUAL_VALIDATION_PENDING",
             "F3_ORIGINAL_NOT_SAFE_REMAINS_OPEN",
         ],
+        "published_nptel_stair_waist_section_benchmark":
+            published_nptel_staircase_benchmark(),
         "staircase_present_in_active_opensees_reference_model": False,
         "staircase_design_approved": False, "engineering_approval": False,
         "source_originals_preserved": True,
