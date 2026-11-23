@@ -4,12 +4,16 @@ No experimental routes, old workflow UI or database identifiers. Archives in Dri
 All published numerical values are recomputed from REAL OpenSeesPy reference solves.
 """
 from __future__ import annotations
+import argparse
 import csv
 import hashlib
 import json
 import math
+from datetime import datetime
 from html import escape as e
 from pathlib import Path
+from zoneinfo import ZoneInfo
+from drive_sources import SCHEMA as DRIVE_SOURCE_SCHEMA
 
 from r6p23.engine import build as solve, digest as model_digest
 from r6p23.runner import reference_fixture
@@ -472,7 +476,26 @@ def write_csv(path:Path,cols,rows):
     with path.open("w",encoding="utf8",newline="") as f:
         w=csv.writer(f);w.writerow(cols);w.writerows(rows)
 
-def build(out:Path=Path("site")):
+def drive_source_panels(drive_sources):
+    if drive_sources is None:
+        return ""
+    if drive_sources.get("schema") != DRIVE_SOURCE_SCHEMA or drive_sources.get("engineering_approval") is not False:
+        raise ValueError("Invalid Structural Analysis source status")
+    notes = "".join(f"<p>{e(note)}</p>" for note in drive_sources["notes"])
+    project_status = table(("Project", "Native sources read", "Evidence links"), [
+        (project["name"], project["native_reads"], project["evidence_links"])
+        for project in drive_sources["projects"]
+    ])
+    inputs = table(("Narayani input", "Review status", "Source summary"), [
+        (row["topic"], row["status"], row["summary"]) for row in drive_sources["inputs"]
+    ])
+    checked = datetime.fromisoformat(drive_sources["read_at_utc"]).astimezone(ZoneInfo("Asia/Kathmandu"))
+    return box("Google Drive source status",
+               f"<p>Verified read on {checked:%d %b %Y at %H:%M} NPT.</p>" + notes + project_status + inputs,
+               "drive-sources")
+
+
+def build(out:Path=Path("site"), drive_sources=None):
     out.mkdir(parents=True,exist_ok=True)
     data=out/"data";data.mkdir(exist_ok=True)
     spec,solved,beam,col=read_actual_solver()
@@ -594,6 +617,7 @@ def build(out:Path=Path("site")):
           'a new uniform 550mm trial passes its limited concentric checks '
           'but awaits actual load, site geometry and engineering approval. '
           +A(F3_PDF,"Read the proposed F3 revision and SP16 audit in Drive")+'.</div>')+
+       drive_source_panels(drive_sources)+
        box("Working demonstration",f'<p>{A("report.html","Open full six-chapter structural example")}. '
            'Beam and column design calculations are linked to signed OpenSees results.</p>'))
     more=page("Resources and archived research","Everything historical is stored in Google Drive; the active site stays uncluttered.",
@@ -634,6 +658,9 @@ def build(out:Path=Path("site")):
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
            "report.html":report(spec,solved,beam,col,verification,f3,slab,stair,stair_load)}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
+    if drive_sources is not None:
+        (data/"drive-source-status.json").write_text(
+            json.dumps(drive_sources,indent=2,sort_keys=True,ensure_ascii=False)+"\n",encoding="utf8")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
       "original_engineering_approval":False,
@@ -703,4 +730,8 @@ def verify(out:Path):
         assert sum(1 for _ in csv.reader(fp))==65
     return receipt
 if __name__=="__main__":
-    build()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--drive-sources", type=Path)
+    args = parser.parse_args()
+    snapshot = json.loads(args.drive_sources.read_text(encoding="utf8")) if args.drive_sources else None
+    build(drive_sources=snapshot)

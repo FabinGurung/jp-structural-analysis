@@ -4,6 +4,31 @@ import json
 import pytest
 from pathlib import Path
 from site_builder import build,verify,DRIVE_ARCHIVE,NAV
+from drive_sources import INPUT_HEADERS, SCHEMA, SourceError, project_inputs
+
+
+def test_drive_summary_keeps_private_source_fields_out_of_pages(tmp_path):
+  private_url = "https://drive.google.com/file/d/private-example/view"
+  row = ["stair", "Staircase geometry", private_url, "mm", "drawing", "STR-16",
+         "Review hold", "Confirm the governing drawing before closing review.", "Yes"]
+  inputs = project_inputs([list(INPUT_HEADERS), row], {"drawing"})
+  status = {
+    "schema": SCHEMA, "engineering_approval": False, "inputs": inputs,
+    "notes": ["The working report is a separate reference model."],
+    "projects": [{"name": "Narayani", "native_reads": 3, "evidence_links": 4}],
+    "read_at_utc": "2026-11-23T00:00:00+00:00",
+  }
+  dest = tmp_path / "site"
+  build(dest, drive_sources=status)
+  public = (dest / "data" / "drive-source-status.json").read_text()
+  assert private_url not in public
+  assert 'id="drive-sources"' in (dest / "projects.html").read_text()
+  assert json.loads(public)["engineering_approval"] is False
+  report = json.loads((dest / "data" / "report-results.json").read_text())
+  assert report["synthetic"] and not report["original_project_engineering_approval"]
+  row[7] = private_url
+  with pytest.raises(SourceError):
+    project_inputs([list(INPUT_HEADERS), row], {"drawing"})
 
 def test_clean_four_route_chaptered_report_and_recovery_links(tmp_path):
   dest=tmp_path/"site"
