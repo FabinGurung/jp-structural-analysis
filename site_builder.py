@@ -14,6 +14,7 @@ from html import escape as e
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from drive_sources import SCHEMA as DRIVE_SOURCE_SCHEMA
+from source_gallery.install import install as install_source_gallery
 
 from r6p23.engine import build as solve, digest as model_digest
 from r6p23.runner import reference_fixture
@@ -102,7 +103,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load):
+def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,source_note=""):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -470,11 +471,22 @@ def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load):
     return page("Structural analysis and design — worked reference report",
         "Original six-chapter organization. Genuine OpenSees frame and slab results; bounded beam and column design checks.",
         '<div class="no-print"><button onclick="window.print()">Print / Save A4 PDF</button></div>'
-        '<div class="report-layout">'+toc+'<article>'+sections+'</article></div>',True)
+        +source_note+'<div class="report-layout">'+toc+'<article>'+sections+'</article></div>',True)
 
 def write_csv(path:Path,cols,rows):
     with path.open("w",encoding="utf8",newline="") as f:
         w=csv.writer(f);w.writerow(cols);w.writerows(rows)
+
+def published_drive_note(snapshot, page):
+    if snapshot is None:
+        return ""
+    note = snapshot["page_notes"][page]
+    return box(
+        "From the structural source guide",
+        f'<p>{e(note)}</p><p>{A("projects.html#drive-sources", "See checked Sheets and Docs")}</p>',
+        "drive-page-note",
+    )
+
 
 def drive_source_panels(drive_sources):
     if drive_sources is None:
@@ -577,6 +589,7 @@ def build(out:Path=Path("site"), drive_sources=None):
          for x in slab["rows"]])
     home=page("Structural Analysis",
        "A simple working studio: review your building and generate a reproducible structural report.",
+       published_drive_note(drive_sources, "home")+
        box("Start here",'<div class="grid">'+
           f'<div class="tile"><b>{A("projects.html","Narayani project")}</b><p>Read the original scope and sources before changing model assumptions.</p></div>'+
           f'<div class="tile"><b>{A("report.html","Working example report")}</b><p>Original six-chapter format, actual OpenSees output and beam/column strength calculations.</p></div>'+
@@ -656,11 +669,13 @@ def build(out:Path=Path("site"), drive_sources=None):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair,stair_load)}
+           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,
+                                published_drive_note(drive_sources, "report"))}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     if drive_sources is not None:
         (data/"drive-source-status.json").write_text(
             json.dumps(drive_sources,indent=2,sort_keys=True,ensure_ascii=False)+"\n",encoding="utf8")
+    install_source_gallery(out, "jp-structural-analysis")
     receipt={"schema":"jp.sar.clean.site.receipt.v1",
       "pages":sorted(files),"archive_url":DRIVE_ARCHIVE,
       "original_engineering_approval":False,

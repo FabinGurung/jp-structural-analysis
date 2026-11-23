@@ -173,8 +173,16 @@ def sync(token):
     if sources["basis-guide"][2] != guide:
         raise SourceError("The companion guide in the register differs from the live guide")
     inputs = project_inputs(cells(token, register, "'Inputs and Review'!A:I"), sources)
-    notes = [public_text(line[len("[PUBLIC] "):], 400) for line in document(token, guide).splitlines()
+    guide_lines = document(token, guide).splitlines()
+    notes = [public_text(line[len("[PUBLIC] "):], 400) for line in guide_lines
              if line.startswith("[PUBLIC] ")]
+    page_notes = {}
+    for page in ("home", "report"):
+        marker = f"[PUBLIC {page.upper()}] "
+        matches = [line[len(marker):] for line in guide_lines if line.startswith(marker)]
+        if len(matches) != 1:
+            raise SourceError(f"Expected one approved public {page} note in the structural guide")
+        page_notes[page] = public_text(matches[0], 400)
     if not notes:
         raise SourceError("The structural guide has no public review notes")
     linked = Counter()
@@ -197,6 +205,7 @@ def sync(token):
         "guide_revision": current[guide][1],
         "inputs": inputs,
         "notes": notes,
+        "page_notes": page_notes,
         "projects": [{"name": name, "native_reads": read[name], "evidence_links": linked[name]}
                      for name in PROJECTS],
         "engineering_approval": False,

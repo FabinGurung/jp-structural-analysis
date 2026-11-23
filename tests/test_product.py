@@ -15,6 +15,7 @@ def test_drive_summary_keeps_private_source_fields_out_of_pages(tmp_path):
   status = {
     "schema": SCHEMA, "engineering_approval": False, "inputs": inputs,
     "notes": ["The working report is a separate reference model."],
+    "page_notes": {"home": "Review the source guide.", "report": "Keep engineering & review holds."},
     "projects": [{"name": "Narayani", "native_reads": 3, "evidence_links": 4}],
     "read_at_utc": "2026-11-23T00:00:00+00:00",
   }
@@ -23,6 +24,10 @@ def test_drive_summary_keeps_private_source_fields_out_of_pages(tmp_path):
   public = (dest / "data" / "drive-source-status.json").read_text()
   assert private_url not in public
   assert 'id="drive-sources"' in (dest / "projects.html").read_text()
+  assert "Review the source guide." in (dest / "index.html").read_text()
+  assert "Keep engineering &amp; review holds." in (dest / "report.html").read_text()
+  assert "data-jp-source-gallery" in (dest / "report.html").read_text()
+  assert "source-gallery.js" in verify(dest)["files_sha256"]
   assert json.loads(public)["engineering_approval"] is False
   report = json.loads((dest / "data" / "report-results.json").read_text())
   assert report["synthetic"] and not report["original_project_engineering_approval"]
