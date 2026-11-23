@@ -13,8 +13,12 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      source_status_sha: ${{ steps.build_report.outputs.source_status_sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -23,11 +27,27 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Verify independent beam/column equations and actual OpenSees solve
         run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py r6p30/test_staircase_loads.py tests/test_product.py
-      - name: Generate only four main pages and one structural report
+      - name: Authenticate the read-only structural Google reader
+        id: google
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/247425973072/locations/global/workloadIdentityPools/jp-pages-github/providers/github
+          service_account: jp-public-pages-reader@just-a-project-5007.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: |
+            https://www.googleapis.com/auth/drive.readonly
+            https://www.googleapis.com/auth/spreadsheets.readonly
+          create_credentials_file: false
+      - name: Validate the registered native Drive sources
+        env:
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+        run: python drive_sources.py --output "$RUNNER_TEMP/structural-drive-status.json"
+      - name: Build the existing report and publish its structural source status
+        id: build_report
         run: |
-          python site_builder.py
+          python site_builder.py --drive-sources "$RUNNER_TEMP/structural-drive-status.json"
           python - <<'PY'
-          import json, pathlib
+          import hashlib, json, os, pathlib
           p=pathlib.Path("site")
           receipt=json.loads((p/"receipt.json").read_text())
           assert receipt["beam_rows"]==256
@@ -36,6 +56,15 @@ jobs:
             "index.html","studio.html","projects.html","more.html","report.html"}
           assert receipt["archive_url"].startswith("https://drive.google.com/drive/folders/")
           assert len(list(p.glob("*.html")))==5
+          status_path=p/"data/drive-source-status.json"
+          status=json.loads(status_path.read_bytes())
+          assert status["schema"]=="jp.structural.drive-source-status.v1"
+          assert status["engineering_approval"] is False
+          assert status["inputs"] and status["notes"]
+          assert sum(p["native_reads"] for p in status["projects"])==6
+          assert 'id="drive-sources"' in (p/"projects.html").read_text()
+          with open(os.environ["GITHUB_OUTPUT"],"a") as output:
+              output.write("source_status_sha="+hashlib.sha256(status_path.read_bytes()).hexdigest()+"\n")
           print("CLEAN_FOUR_ROUTE_SIX_CHAPTER_PRODUCT_VERIFIED")
           PY
       - uses: actions/configure-pages@v5
@@ -54,9 +83,10 @@ jobs:
       - name: Verify published report, real signed column and beam results and Drive archive link
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          DRIVE_STATUS_SHA: ${{ needs.build.outputs.source_status_sha }}
         run: |
           python - <<'PY'
-          import json,os,time,urllib.request
+          import hashlib,json,os,time,urllib.request
           base=os.environ["SITE_URL"].rstrip("/")+"/"
           for attempt in range(20):
             try:
@@ -65,6 +95,10 @@ jobs:
                   headers={"User-Agent":"JP-SAR-Clean-Report-Readback",
                            "Cache-Control":"no-cache"})
                 with urllib.request.urlopen(req,timeout=25) as x:return x.read()
+              source_status=get("data/drive-source-status.json")
+              assert hashlib.sha256(source_status).hexdigest()==os.environ["DRIVE_STATUS_SHA"]
+              assert json.loads(source_status)["engineering_approval"] is False
+              assert b'id="drive-sources"' in get("projects.html")
               receipt=json.loads(get("receipt.json"))
               result=json.loads(get("data/report-results.json"))
               assert receipt["beam_rows"]==256 and receipt["column_rows"]==64
