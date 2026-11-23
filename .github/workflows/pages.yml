@@ -63,6 +63,10 @@ jobs:
           assert status["inputs"] and status["notes"]
           assert sum(p["native_reads"] for p in status["projects"])==6
           assert 'id="drive-sources"' in (p/"projects.html").read_text()
+          assert set(status["page_notes"]) == {"home", "report"}
+          for page in ("index.html", "report.html"):
+              html = (p/page).read_text()
+              assert 'id="drive-page-note"' in html and "data-jp-source-gallery" in html
           with open(os.environ["GITHUB_OUTPUT"],"a") as output:
               output.write("source_status_sha="+hashlib.sha256(status_path.read_bytes()).hexdigest()+"\n")
           print("CLEAN_FOUR_ROUTE_SIX_CHAPTER_PRODUCT_VERIFIED")
@@ -99,6 +103,10 @@ jobs:
               assert hashlib.sha256(source_status).hexdigest()==os.environ["DRIVE_STATUS_SHA"]
               assert json.loads(source_status)["engineering_approval"] is False
               assert b'id="drive-sources"' in get("projects.html")
+              for name in ("index.html", "report.html"):
+                html=get(name)
+                assert b'id="drive-page-note"' in html and b"data-jp-source-gallery" in html
+              assert b"Curved gallery" in get("source-gallery.js")
               receipt=json.loads(get("receipt.json"))
               result=json.loads(get("data/report-results.json"))
               assert receipt["beam_rows"]==256 and receipt["column_rows"]==64
