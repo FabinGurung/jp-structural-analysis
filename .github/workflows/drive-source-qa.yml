@@ -1,0 +1,41 @@
+name: Structural Drive source QA
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/drive-source-qa.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  check-google-reader:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Authenticate the existing keyless Google reader
+        id: google
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/247425973072/locations/global/workloadIdentityPools/jp-pages-github/providers/github
+          service_account: jp-public-pages-reader@just-a-project-5007.iam.gserviceaccount.com
+          token_format: access_token
+          access_token_scopes: |
+            https://www.googleapis.com/auth/drive.readonly
+            https://www.googleapis.com/auth/spreadsheets.readonly
+          create_credentials_file: false
+      - name: Check read-only Drive access
+        env:
+          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+        run: |
+          python - <<'PY'
+          import os, urllib.parse, urllib.request
+          query=urllib.parse.urlencode({
+              "q": "name = 'JP Structural Analysis — Narayani Inputs and Review — LIVE' and trashed = false",
+              "fields": "files(mimeType),nextPageToken"
+          })
+          request=urllib.request.Request("https://www.googleapis.com/drive/v3/files?"+query,
+              headers={"Authorization": "Bearer "+os.environ["GOOGLE_OAUTH_ACCESS_TOKEN"]})
+          with urllib.request.urlopen(request,timeout=20) as response:
+              assert response.status==200
+          print("Structural Analysis main can read Drive using the existing Google reader.")
+          PY
