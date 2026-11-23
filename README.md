@@ -6,6 +6,15 @@
 
 The Drive archive preserves the full pre-cleanup source and Git history bundle, previous published website, responsive QA and source-design QA. The current source tree keeps only the working reporting components, not the experimental web pages and workflows.
 
+## Google Drive source publishing
+
+[Structural project source status](https://fabingurung.github.io/jp-structural-analysis/projects.html#drive-sources) shows the most recent verified read. The Narayani workbook and companion guide are in the Structural Analysis folder under `01_JP / 09 GitHub Repositories`.
+
+- In **Inputs and Review**, record the observed value, units, source section, evidence keys and review state. Use the public summary and publish flag for material intended for the Projects page.
+- In the companion Google Doc, paragraphs beginning with `[PUBLIC] ` feed the project's public review notes. Other working notes and original evidence stay in Drive.
+- [Publish Structural Report](https://github.com/FabinGurung/jp-structural-analysis/actions/workflows/pages.yml) validates source permissions, identities, revisions and publication fields before deployment. Run it manually to pick up Drive edits. The staging workflow can build a preview without updating Pages.
+- The worked OpenSees report uses the repository's reference model. Reviews and source-read receipts document custody and open engineering questions.
+
 ## Active software
 - \`r6p23/engine.py\`, \`r6p23/runner.py\`: actual OpenSeesPy ShellMITC4 + elastic beam/column benchmark, synthetic two-floor model.
 - \`r6p30/beam_design.py\`: isolated IS456 My/Vz beam flexure + vertical shear, 256 matched signed end-result checks.
@@ -13,7 +22,7 @@ The Drive archive preserves the full pre-cleanup source and Git history bundle, 
 - `r6p30/column_validation.py`: independent analytical uniform-compression force and 32/64/128-strip convergence benchmarks; results available in the generated site's `data/column-verification.json`.
 - **Independent NPTEL SP16 chart example:** A 450 × 500 mm M25 Fe415 column with 12Ø16 bars, 56 mm centre cover and Pu=1,600 kN, compared against IIT Kharagpur Lesson 26 Q.5/A.5. Published chart-derived major/minor moments are 246.376/215.156 kN·m. We perform an independent numerical strain-compatibility calculation; a predeclared 3% research agreement band applies to both directions. The figure's M20 caption conflicts with the M25 problem and worked answer, so that discrepancy remains recorded. Details in the report and data/column-verification.json. One worked example is NOT complete SP16 chart certification. Source: https://archive.nptel.ac.in/content/storage2/courses/105105104/pdf/m10l26.pdf .
 - \`site_builder.py\`: one six-chapter printable report; four simple site areas: Home / Studio Standard / Projects / More.
-- Two Actions: \`ci.yml\` for tests, \`pages.yml\` for publishing. No research experiments scheduled.
+- Actions cover engine tests, the Drive source preview and the live Pages publisher.
 
 
 ## Current design verification and Drive archive
