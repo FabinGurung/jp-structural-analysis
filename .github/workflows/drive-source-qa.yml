@@ -8,10 +8,18 @@ permissions:
   contents: read
   id-token: write
 jobs:
-  check-google-reader:
+  validate-structural-sources:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: python -m pip install -r requirements.txt
       - name: Authenticate the existing keyless Google reader
         id: google
         uses: google-github-actions/auth@v3
@@ -23,19 +31,25 @@ jobs:
             https://www.googleapis.com/auth/drive.readonly
             https://www.googleapis.com/auth/spreadsheets.readonly
           create_credentials_file: false
-      - name: Check read-only Drive access
+      - name: Import registered Google Sheets and Docs
         env:
           GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
+        run: python drive_sources.py --output "$RUNNER_TEMP/structural-drive-status.json"
+      - name: Build the structural report preview
         run: |
+          python site_builder.py --drive-sources "$RUNNER_TEMP/structural-drive-status.json"
           python - <<'PY'
-          import os, urllib.parse, urllib.request
-          query=urllib.parse.urlencode({
-              "q": "name = 'JP Structural Analysis — Narayani Inputs and Review — LIVE' and trashed = false",
-              "fields": "files(mimeType),nextPageToken"
-          })
-          request=urllib.request.Request("https://www.googleapis.com/drive/v3/files?"+query,
-              headers={"Authorization": "Bearer "+os.environ["GOOGLE_OAUTH_ACCESS_TOKEN"]})
-          with urllib.request.urlopen(request,timeout=20) as response:
-              assert response.status==200
-          print("Structural Analysis main can read Drive using the existing Google reader.")
+          import json
+          from pathlib import Path
+          live = json.loads(Path("site/data/drive-source-status.json").read_text())
+          assert sum(row["native_reads"] for row in live["projects"]) == 6
+          assert live["inputs"] and live["notes"]
+          assert live["engineering_approval"] is False
+          assert "id=\"drive-sources\"" in Path("site/projects.html").read_text()
+          print("Source-backed report preview built with 6 native sources.")
           PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-structural-report-preview
+          path: site
+          retention-days: 7
