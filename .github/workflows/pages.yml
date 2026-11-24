@@ -1,195 +1,70 @@
-name: Publish Structural Report
+name: Publish structural website
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
-  pages: write
-  id-token: write
 concurrency:
-  group: jp-structural-report-pages
+  group: structural-website-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  build:
+  validate:
     runs-on: ubuntu-latest
-    outputs:
-      source_status_sha: ${{ steps.build_report.outputs.source_status_sha }}
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - name: Verify publication content
+        run: python verify_site.py
+      - name: Store website preview
+        uses: actions/upload-artifact@v4
         with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install pinned runtime
-        run: python -m pip install -r requirements.txt
-      - name: Verify independent beam/column equations and actual OpenSees solve
-        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py r6p30/test_staircase_loads.py tests/test_product.py
-      - name: Authenticate the read-only structural Google reader
-        id: google
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: projects/247425973072/locations/global/workloadIdentityPools/jp-pages-github/providers/github
-          service_account: jp-public-pages-reader@just-a-project-5007.iam.gserviceaccount.com
-          token_format: access_token
-          access_token_scopes: |
-            https://www.googleapis.com/auth/drive.readonly
-            https://www.googleapis.com/auth/spreadsheets.readonly
-          create_credentials_file: false
-      - name: Validate the registered native Drive sources
-        env:
-          GOOGLE_OAUTH_ACCESS_TOKEN: ${{ steps.google.outputs.access_token }}
-        run: python drive_sources.py --output "$RUNNER_TEMP/structural-drive-status.json"
-      - name: Build the existing report and publish its structural source status
-        id: build_report
-        run: |
-          python site_builder.py --drive-sources "$RUNNER_TEMP/structural-drive-status.json"
-          python - <<'PY'
-          import hashlib, json, os, pathlib
-          p=pathlib.Path("site")
-          receipt=json.loads((p/"receipt.json").read_text())
-          assert receipt["beam_rows"]==256
-          assert receipt["column_rows"]==64
-          assert set(receipt["pages"])=={
-            "index.html","studio.html","projects.html","more.html","report.html"}
-          assert receipt["archive_url"].startswith("https://drive.google.com/drive/folders/")
-          assert len(list(p.glob("*.html")))==5
-          status_path=p/"data/drive-source-status.json"
-          status=json.loads(status_path.read_bytes())
-          assert status["schema"]=="jp.structural.drive-source-status.v1"
-          assert status["engineering_approval"] is False
-          assert status["inputs"] and status["notes"]
-          assert sum(p["native_reads"] for p in status["projects"])==6
-          assert 'id="drive-sources"' in (p/"projects.html").read_text()
-          assert set(status["page_notes"]) == {"home", "report"}
-          for page in ("index.html", "report.html"):
-              html = (p/page).read_text()
-              assert 'id="drive-page-note"' in html and "data-jp-source-gallery" in html
-          with open(os.environ["GITHUB_OUTPUT"],"a") as output:
-              output.write("source_status_sha="+hashlib.sha256(status_path.read_bytes()).hexdigest()+"\n")
-          print("CLEAN_FOUR_ROUTE_SIX_CHAPTER_PRODUCT_VERIFIED")
-          PY
+          name: structural-website
+          path: site/
+          if-no-files-found: error
       - uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main'
       - uses: actions/upload-pages-artifact@v4
+        if: github.ref == 'refs/heads/main'
         with:
           path: site
   deploy:
-    needs: build
+    if: github.ref == 'refs/heads/main'
+    needs: validate
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify published report, real signed column and beam results and Drive archive link
+      - name: Verify served website against publication
         env:
           SITE_URL: ${{ steps.deployment.outputs.page_url }}
-          DRIVE_STATUS_SHA: ${{ needs.build.outputs.source_status_sha }}
         run: |
           python - <<'PY'
-          import hashlib,json,os,time,urllib.request
-          base=os.environ["SITE_URL"].rstrip("/")+"/"
-          for attempt in range(20):
-            try:
-              def get(name):
-                req=urllib.request.Request(base+name+"?ref="+str(attempt),
-                  headers={"User-Agent":"JP-SAR-Clean-Report-Readback",
-                           "Cache-Control":"no-cache"})
-                with urllib.request.urlopen(req,timeout=25) as x:return x.read()
-              source_status=get("data/drive-source-status.json")
-              assert hashlib.sha256(source_status).hexdigest()==os.environ["DRIVE_STATUS_SHA"]
-              assert json.loads(source_status)["engineering_approval"] is False
-              assert b'id="drive-sources"' in get("projects.html")
-              for name in ("index.html", "report.html"):
-                html=get(name)
-                assert b'id="drive-page-note"' in html and b"data-jp-source-gallery" in html
-              assert b"Curved gallery" in get("source-gallery.js")
-              receipt=json.loads(get("receipt.json"))
-              result=json.loads(get("data/report-results.json"))
-              assert receipt["beam_rows"]==256 and receipt["column_rows"]==64
-              assert result["column_pmm_checks"]["row_count"]==64
-              assert result["column_pmm_checks"]["axial_tension_rows_excluded"]==0
-              assert all(x["compression_signed_kN"]>0
-                  for x in result["column_pmm_checks"]["rows"])
-              assert result["column_capacity_verification"]["relative_pure_axial_error"]<.001
-              assert result["column_capacity_verification"]["sp16_verified"] is False
-              ext=result["column_capacity_verification"]["external_sp16_nptel_reference"]
-              assert ext["both_axes_within_benchmark_band"]
-              assert abs(ext["major_relative_difference"])<.03
-              assert abs(ext["minor_relative_difference"])<.03
-              assert ext["reference_major_M_kNm"]==246.376
-              assert ext["reference_minor_M_kNm"]==215.156
-              assert ext["full_SP16_chart_verification"] is False
-              assert ext["construction_approval"] is False
-              assert result["column_capacity_verification"]["external_sp16_nptel_twenty_bar_reference"]["published_Mu_kNm"]>116
-              assert abs(result["column_capacity_verification"]["external_sp16_nptel_twenty_bar_reference"]["relative_difference"])<.03
-              assert result["f3_proposed_concentric_redesign_study"]["historical_not_safe_preserved"] is True
-              assert result["f3_proposed_concentric_redesign_study"]["preferred_uniform_revision_550mm"]["listed_concentric_checks_pass"] is True
-              assert result["f3_proposed_concentric_redesign_study"]["approved_for_construction"] is False
-              assert json.loads(get("data/f3-trial.json"))["approved_for_construction"] is False
-              assert b"6.3 Narayani F3" in get("report.html")
-              assert b"R6.35 engineer-review PDF" in get("more.html")
-              assert b"6.2.2 Independent published SP16-chart example" in get("report.html")
-              assert json.loads(get("data/column-verification.json"))["construction_approval"] is False
-              assert result["beam_checks"]["rows_count"]==256
-              slab=result["slab_reinforcement_screen"]
-              assert receipt["slab_rows"]==496
-              assert slab["rows_count"]==496 and slab["shell_cells"]==31
-              assert not slab["engineering_approval"]
-              assert not slab["actual_project_slab_geometry_and_rebar_verified"]
-              assert slab["published_oneway_nptel_benchmark"]["computed_analytic_Mu_kNm_m"]>21.53
-              assert slab["published_oneway_nptel_benchmark"]["our_relative_chart_capacity_difference"]<-.03
-              assert b"6.4 Slab reinforcement" in get("report.html")
-              assert b"1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn" in get("more.html")
-              assert b"1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG" in get("report.html")
-              stair=result["staircase_source_reconciliation"]
-              assert not stair["engineering_approval"]
-              assert stair["report_moment_normalization_unresolved"]
-              assert not stair["staircase_present_in_active_opensees_reference_model"]
-              assert b"6.5 Narayani staircase" in get("report.html")
-              bm=stair["published_nptel_stair_waist_section_benchmark"]
-              assert bm["within_predeclared_1pct_research_band"]
-              assert abs(bm["relative_stress_block_vs_SP16_difference"])<.01
-              assert bm["source_required_steel_mm2_m"]==920.64
-              assert not bm["engineering_approval"]
-              assert b"6.5.1 External NPTEL staircase" in get("report.html")
-              assert b"6.5.2 Original drawing geometry" in get("report.html")
-              assert b"6.5.3 Staircase load worksheet" in get("report.html")
-              loads=json.loads(get("data/staircase-worksheet-loads.json"))
-              assert loads["source_numbers_reproduced_with_printed_precision"]
-              assert 2 < loads["flight_combo_difference_kPa"] < 3
-              assert not loads["engineering_approval"]
-              assert loads["occupancy_description_conflict"]["applicable_imposed_load_and_permit_occupancy_unresolved"]
-              assert result["staircase_worksheet_load_reconciliation"]["schema"]==loads["schema"]
-              geom=json.loads(get("data/staircase-geometry.json"))
-              assert geom["original_drawing"]["drawing_sheet_label"]=="STR-16"
-              assert geom["original_drawing"]["pdf_page_1_based"]==16
-              assert geom["grid_bay_is_not_FEM_effective_span"]
-              assert geom["original_drawing"]["grid_bay_C_to_D_mm"]==4965
-              assert geom["original_drawing"]["grid_bay_1_to_2_mm"]==4275
-              assert not geom["actual_staircase_model_ready"]
-              assert not geom["engineering_approval"]
-              assert result["staircase_source_reconciliation"]["source_geometry_and_support_gate"]["schema"]==geom["schema"]
-              assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("report.html")
-              assert b"1MVWeuQEEqKlcngzOFyU3JShvJE-7_yByvWJYiQJRd90" in get("more.html")
-              assert json.loads(get("data/staircase-source-review.json"))["engineering_approval"] is False
-
-              assert len(get("data/slab-checks.csv").splitlines())==497
-              assert json.loads(get("data/slab-benchmark.json"))["construction_approval"] is False
-
-              assert not result["original_project_engineering_approval"]
-              assert result["original_narayani_F3_NOT_SAFE"]
-              assert b"6.0 Design of Structural Elements" in get("report.html")
-              assert b"column" in get("report.html").lower()
-              assert b"drive.google.com/drive/folders/" in get("more.html")
-              assert b"TABLE OF CONTENTS" in get("report.html")
-              print("LIVE_CLEAN_STRUCTURAL_REPORT_PMM_BEAM_AND_ARCHIVE_LINK_VERIFIED")
-              break
-            except Exception as exc:
-              if attempt==19:raise
-              print("Waiting for Pages CDN",attempt+1,str(exc)[:160])
-              time.sleep(7)
+          import pathlib, os, time, urllib.request
+          base=os.environ['SITE_URL'].rstrip('/')+'/'
+          for attempt in range(15):
+              try:
+                  for p in pathlib.Path('site').iterdir():
+                      req=urllib.request.Request(base+p.name+'?check='+str(attempt),headers={'Cache-Control':'no-cache'})
+                      with urllib.request.urlopen(req,timeout=20) as res:
+                          assert res.read()==p.read_bytes(), p.name
+                  print('All published files match the validated website.')
+                  break
+              except Exception as exc:
+                  if attempt == 14: raise
+                  print(str(exc)[:160])
+                  time.sleep(5)
           PY

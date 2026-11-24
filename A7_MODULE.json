@@ -6,7 +6,7 @@
   "module_id": "MOD-STRUCT-001",
   "repository_id": "REPO-000002",
   "provider_repository_id": "843020367",
-  "repository_full_name": "FabinGurung/JP_Structural_Analysis",
+  "repository_full_name": "FabinGurung/jp-structural-analysis",
   "canonical_label": "JP Structural Analysis",
   "module_role": "STRUCTURAL_ANALYSIS",
   "ownership_profile_id": "OWN-MOD-STRUCT-001",
@@ -22,66 +22,36 @@
   },
   "refs": {
     "default_branch": "main",
-    "canonical_working_ref": "engine/opensees-sar-v0.1",
+    "canonical_working_ref": "main",
     "publication_ref": "main"
   },
   "routing_entrypoints": [
     {
       "entrypoint_id": "READ_FIRST",
       "kind": "HUMAN_READ_FIRST",
-      "ref": "engine/opensees-sar-v0.1",
+      "ref": "main",
       "path": "README.md"
-    },
-    {
-      "entrypoint_id": "GOVERNANCE",
-      "kind": "AUTHORITY_DOCUMENT",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "GOVERNANCE.md"
-    },
-    {
-      "entrypoint_id": "PROVENANCE",
-      "kind": "PROVENANCE",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "PROVENANCE.md"
-    },
-    {
-      "entrypoint_id": "ENGINE_SOURCE",
-      "kind": "ENGINE_SOURCE",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "src/"
-    },
-    {
-      "entrypoint_id": "SCHEMAS",
-      "kind": "FORMAL_CONTRACT",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "schemas/"
-    },
-    {
-      "entrypoint_id": "BENCHMARKS",
-      "kind": "VALIDATION_EVIDENCE",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "benchmarks/"
     },
     {
       "entrypoint_id": "TESTS",
       "kind": "VALIDATION",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "tests/"
+      "ref": "main",
+      "path": "verify_site.py"
     },
     {
       "entrypoint_id": "REPORTS",
       "kind": "REPORT_OUTPUT_AREA",
-      "ref": "engine/opensees-sar-v0.1",
-      "path": "reports/"
+      "ref": "main",
+      "path": "site/"
     }
   ],
   "resolver_rules": [
     "READ_THIS_MANIFEST_FIRST",
     "LOAD_A7_OWNERSHIP_PROFILE_BEFORE_DOMAIN_MUTATION",
-    "USE_CANONICAL_WORKING_REF_FOR_CURRENT_ENGINE",
+    "USE_CANONICAL_WORKING_REF_FOR_CURRENT_PUBLICATION",
     "CI_SUCCESS_IS_NOT_ENGINEERING_APPROVAL",
     "OPERATIONS_LINKS_DO_NOT_TRANSFER_STRUCTURAL_AUTHORITY"
   ],
   "manifest_role": "ROUTING_ONLY_NON_AUTHORITATIVE_FOR_DOMAIN_FACTS",
-  "observed_at": "2026-10-06T11:36:00Z"
+  "observed_at": "2026-11-24T04:00:00Z"
 }
