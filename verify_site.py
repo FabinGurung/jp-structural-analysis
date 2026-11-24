@@ -2,7 +2,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 import re
 site=Path("site")
-assert {p.name for p in site.iterdir()}=={"index.html","projects.html","report.html","staircase.html","studio.html","more.html","style.css"}
+assert {p.name for p in site.iterdir()}=={"index.html","projects.html","report.html","staircase.html","studio.html","more.html","style.css","truss.svg","frame.svg","visuals.css","visuals.js","frame-viewer.js","stair-shear.svg","stair-moment.svg"}
 class Visible(HTMLParser):
     def __init__(self):
         super().__init__(); self.words=[]; self.links=[]; self.ids=[]
@@ -33,6 +33,15 @@ assert "21.533203" in report and "14.0625" in report
 assert "Version Control and Audit" not in report
 stair=(site/"staircase.html").read_text()
 assert "20.931" in stair and "14.963" in stair and "17.111" in stair and "14.589" in stair
-assert len(re.findall(r'<svg viewBox=',stair))==2
+assert 'src="stair-shear.svg"' in stair and 'src="stair-moment.svg"' in stair
 assert "NOT SAFE" in (site/"projects.html").read_text()
+for f in ["index.html","projects.html","report.html","staircase.html"]:
+    t=(site/f).read_text()
+    assert 'src="visuals.js"' in t and 'href="visuals.css"' in t
+assert 'id="frame-stage"' in report and 'src="frame-viewer.js"' in report
+assert 'not the verified project model' in report
+assert 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js' in (site/"frame-viewer.js").read_text()
+assert '@keyframes truss-tour' in (site/"visuals.css").read_text()
+assert 'prefers-reduced-motion' in (site/"visuals.css").read_text()
+assert 'id="calculation-workbooks"' in (site/"projects.html").read_text()
 print("Report presentation checks passed.")
