@@ -14,7 +14,7 @@ class Visible(HTMLParser):
 for p in site.glob("*.html"):
     doc=Visible(); doc.feed(p.read_text())
     visible=" ".join(doc.words)
-    assert not re.search(r"\b(?:AI|ChatGPT|OpenAI|Codex|memory wall|version control|revision history|GitHub|commit)\b",visible,re.I),p
+    assert not re.search(r"\b(?:AI|ChatGPT|OpenAI|Codex|audit|archive|memory wall|version control|revision history|GitHub|commit)\b",visible,re.I),p
     for link in doc.links:
         if link.startswith("https://"): continue
         target,_,anchor=link.partition("#")
