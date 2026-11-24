@@ -1,9 +1,5 @@
 # JP Structural Analysis
 
-Publication only. Working calculation sources and engineering evidence reside in the assigned Google Drive backend. Site files are reviewed presentation snapshots; no calculation engine runs in this repository. Update from the native source workbooks manually, check the publication, and merge through the publication workflow. Engineering review restrictions must remain visible.
+Frontend for the six-chapter Narayani structural report. The report text is maintained in its [Google Doc](https://docs.google.com/document/d/1-Hq89KQgTYX20-nT1a85zHD1xqCTzD1Ef3r4--rdaM4/edit); the report calculation tables and spreadsheet formulas are maintained in its [Google Sheet](https://docs.google.com/spreadsheets/d/1Yli8MarffSVTW-XVvgLvj0nvxB-zcUi9Nyz6oGSeCeI/edit). The existing [staircase workbook](https://docs.google.com/spreadsheets/d/1Y-nVwU5Fd8LOBZRcyAVeT--PLQ40rrSUKfmQlRaJZZs/edit) remains the calculation owner for its detailed worksheet. The [original report](https://drive.google.com/file/d/1TpWUmOdrcQqOpkN6qvmhZ12KrYaNABBM/view) remains the original project source.
 
-- [Current source backend](https://drive.google.com/drive/folders/1KhjI1OF33VGS5F3kDBe5eg0_XWbA9bHe)
-- [Version control and audit — LIVE](https://docs.google.com/document/d/1XDx6e5XpmiAIw8NF4bZLMgUtYtzY07829sxfxwOPQMs/edit)
-- [Retired source and history archive](https://drive.google.com/file/d/1-MAXK8tZc_2LQT5aEjLpJMLheFYAWQ2z/view)
-
-Run `python verify_site.py` before publication. Only `site/` is deployed. No periodic calculation or refresh is scheduled. The full previous engineering engine, tests, drafts, and original report are preserved in Drive and immutable Git history.
+GitHub publishes reviewed, manually refreshed presentation snapshots only. No solver runs here. Keep project evidence separate from independent reference results and retain engineering review restrictions. Version control and audit are maintained only in the [Drive version record](https://docs.google.com/document/d/1XDx6e5XpmiAIw8NF4bZLMgUtYtzY07829sxfxwOPQMs/edit). Verify the static site before merging a publication update.
