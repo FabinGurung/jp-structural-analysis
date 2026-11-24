@@ -1,0 +1,38 @@
+name: Archive pre Sheets-first structural history
+on:
+  push:
+    branches: [archive/sheets-first-transition-20261124]
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve exact refs and source snapshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --prune --tags origin '+refs/heads/*:refs/remotes/origin/*'
+          mkdir -p "$RUNNER_TEMP/structural-transition"
+          out="$RUNNER_TEMP/structural-transition"
+          git show-ref > "$out/refs.txt"
+          git ls-remote --heads --tags origin > "$out/remote-refs.txt"
+          git bundle create "$out/JP_SAR_COMPLETE_HISTORY.bundle" --all
+          git bundle verify "$out/JP_SAR_COMPLETE_HISTORY.bundle"
+          git bundle list-heads "$out/JP_SAR_COMPLETE_HISTORY.bundle" > "$out/bundle-refs.txt"
+          git archive --format=tar.gz -o "$out/production-51b8634.tar.gz" 51b86349420351c7b402b94c702cc9f4d8702435
+          git archive --format=tar.gz -o "$out/draft-71-etabs-topology.tar.gz" 9d2fe911fd279166f4523a5181345ef8382e0fce
+          git archive --format=tar.gz -o "$out/draft-72-diagram-reconstruction.tar.gz" 4f361da904c27d257be736aaeee842a1718544ec
+          printf '%s\n' '24 November 2026: archive of versioned source and historical Git refs for Sheets-first migration. Production and drafts are retained as baseline/reference, not structural approval. No original restricted project files are imported.' > "$out/README.txt"
+          cd "$out"
+          sha256sum JP_SAR_COMPLETE_HISTORY.bundle *.tar.gz refs.txt remote-refs.txt bundle-refs.txt README.txt > SHA256SUMS.txt
+          sha256sum -c SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: JP_SAR_Sheets_First_Transition_Archive
+          path: ${{ runner.temp }}/structural-transition/
+          retention-days: 30
+          if-no-files-found: error
