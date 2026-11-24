@@ -26,7 +26,7 @@ jobs:
       - name: Install pinned runtime
         run: python -m pip install -r requirements.txt
       - name: Verify independent beam/column equations and actual OpenSees solve
-        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py r6p30/test_staircase_loads.py tests/test_product.py
+        run: python -m pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py r6p30/test_staircase_loads.py r6p30/test_staircase_diagrams.py tests/test_product.py
       - name: Authenticate the read-only structural Google reader
         id: google
         uses: google-github-actions/auth@v3
@@ -158,6 +158,10 @@ jobs:
               assert b"6.5.1 External NPTEL staircase" in get("report.html")
               assert b"6.5.2 Original drawing geometry" in get("report.html")
               assert b"6.5.3 Staircase load worksheet" in get("report.html")
+              assert b"6.5.4 Source AB/BC diagrams" in get("report.html")
+              diag=json.loads(get("data/staircase-diagram-reconstruction.json"))
+              assert not diag["engineering_approval"] and not diag["actual_staircase_FEM_completed"]
+              assert set(diag["cases"])=={"AB","BC"}
               loads=json.loads(get("data/staircase-worksheet-loads.json"))
               assert loads["source_numbers_reproduced_with_printed_precision"]
               assert 2 < loads["flight_combo_difference_kPa"] < 3
