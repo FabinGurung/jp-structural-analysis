@@ -25,6 +25,7 @@ from r6p30.footing_f3 import study as f3_study, ARCHIVE as F3_ARCHIVE
 from r6p30.slab_design import from_opensees as slab_from_opensees
 from r6p30.staircase_review import review as staircase_review
 from r6p30.staircase_loads import audit as staircase_load_audit
+from r6p30.staircase_diagrams import audit as staircase_diagram_audit
 F3_PDF="https://drive.google.com/file/d/1s9u6nqceP4iygo9E1ijMeDlNsS0npvqc/view"
 SLAB_ARCHIVE="https://drive.google.com/drive/folders/1u-vkOxS7VuOQMKe908HeeP-VlGmRxTfn"
 SLAB_QA_PDF="https://drive.google.com/file/d/1Jppw9fFZ9p28IQbmBN3ezpVMTvJXJOyG/view"
@@ -103,7 +104,7 @@ def read_actual_solver():
     assert column["original_narayani_F3_not_safe_preserved"]
     return spec,out,beam,column
 
-def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,source_note=""):
+def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,stair_diagrams,source_note=""):
     loading=solved["source_ledger"]["gravity_totals_kN"]
     tf=solved["topology"]
     mode=solved["solutions"]["FLEXIBLE_SHELL"]
@@ -139,6 +140,13 @@ def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,source_not
       ("Actual support XYZ and continuity","Unverified — model gate closed"),
       ("Source-reconciled staircase FEM","Not built — no actual OpenSees staircase results")])
     stair_bm=stair["published_nptel_stair_waist_section_benchmark"]
+    stair_diagram_table=table(("Diagram","Inferred line length (m)","Inferred center zone (m)","Source M (kN·m)","Calculated M (kN·m)","Difference (%)"),[
+      (key,n(v["conditional_static_reconstruction"]["inferred_line_span_m"]),
+       n(v["conditional_static_reconstruction"]["inferred_central_patch_m"]),
+       n(v["source_visual_readback"]["source_peak_moment_kNm"]),
+       n(v["conditional_static_reconstruction"]["predicted_peak_M_kNm"]),
+       f'{v["conditional_static_reconstruction"]["moment_relative_difference_pct"]:.5f}')
+      for key,v in stair_diagrams["cases"].items()])
     stair_work=stair_load["report_170_254_worksheet_reconstruction"]
     stair_load_table=table(("Original staircase worksheet","Independent readback / status"),[
       ("Flight step + waist + finish cross-section",
@@ -453,6 +461,16 @@ def report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,source_not
         '<p>'+A('data/staircase-worksheet-loads.json','Review full numeric calculations and unresolved code/occupancy holds')
         +' · '+A(stair_load["code_references_for_qualified_engineer"]["NBC_105_2025_government"],
          'Nepal government building-code register')+'.</p>'
+        '<h3>6.5.4 Source AB/BC diagrams — conditional inverse statics</h3>'
+        '<p>The embedded beam diagrams on PDF pages 64–65 show a symmetric outer/central/outer '
+        'load pattern labelled 11 / 16.24 / 11. Assuming kN/m, simple supports and a peak at '
+        'midspan, infer the line length from the displayed peak station and the central patch '
+        'from the displayed shear. The source moment is withheld from calibration. '
+        'This is a reconstruction of a reported line model, not a verified project span.</p>'
+        +stair_diagram_table+
+        '<p>'+A('data/staircase-diagram-reconstruction.json','Read the source values, conditional reactions and sampled V/M diagrams')
+        +'. The source shear is a calibration input, not independently predicted; '
+        'the source deflections and actual staircase geometry and load transfer remain unverified.</p>'
         '<p>'+A('data/staircase-source-review.json','Read full staircase arithmetic and unresolved holds')
         +' · '+A(STAIR_QA_DOC,'Full R6.37 staircase research QA (Drive)')
         +' · '+A(stair_drawing['source'],'Original July 2026 drawing')
@@ -516,6 +534,8 @@ def build(out:Path=Path("site"), drive_sources=None):
     slab=slab_from_opensees(solved)
     stair=staircase_review()
     stair_load=staircase_load_audit()
+    stair_diagrams=staircase_diagram_audit()
+    (data/"staircase-diagram-reconstruction.json").write_text(json.dumps(stair_diagrams,indent=2,sort_keys=True,allow_nan=False)+"\n")
     (data/"staircase-worksheet-loads.json").write_text(json.dumps(stair_load,
         indent=2,sort_keys=True,allow_nan=False)+"\n")
     (data/"staircase-geometry.json").write_text(json.dumps(
@@ -544,6 +564,7 @@ def build(out:Path=Path("site"), drive_sources=None):
       "slab_reinforcement_screen":slab,
       "staircase_source_reconciliation":stair,
       "staircase_worksheet_load_reconciliation":stair_load,
+      "staircase_diagram_reconstruction":stair_diagrams,
       "provenance_code":REPO,"original_report":ORIGINAL_REPORT,
       "archive":DRIVE_ARCHIVE}
     (data/"report-results.json").write_text(json.dumps(result,indent=2,sort_keys=True,allow_nan=False)+"\n")
@@ -669,7 +690,7 @@ def build(out:Path=Path("site"), drive_sources=None):
          '<p>Historical experiments can be retrieved by archive link without '
          'running their old workflows or putting their developer UI back on the public site.</p>'))
     files={"index.html":home,"studio.html":studio,"projects.html":projects,"more.html":more,
-           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,
+           "report.html":report(spec,solved,beam,col,verification,f3,slab,stair,stair_load,stair_diagrams,
                                 published_drive_note(drive_sources, "report"))}
     for name,text in files.items():(out/name).write_text(text,encoding="utf8")
     if drive_sources is not None:
@@ -710,6 +731,11 @@ def verify(out:Path):
     assert "6.5 Narayani staircase" in (out/"report.html").read_text()
     assert "6.5.2 Original drawing geometry" in (out/"report.html").read_text()
     assert "6.5.3 Staircase load worksheet" in (out/"report.html").read_text()
+    assert "6.5.4 Source AB/BC diagrams" in (out/"report.html").read_text()
+    diagram=result["staircase_diagram_reconstruction"]
+    assert not diagram["engineering_approval"] and not diagram["actual_staircase_FEM_completed"]
+    assert set(diagram["cases"])=={"AB","BC"}
+    assert (out/"data/staircase-diagram-reconstruction.json").exists()
     loads=result["staircase_worksheet_load_reconciliation"]
     assert loads["source_numbers_reproduced_with_printed_precision"]
     assert loads["flight_combo_difference_kPa"]>2.
