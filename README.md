@@ -59,8 +59,16 @@ The source worksheet uses **1.5(DL+LL)** to produce flight ~17.11 kN/m² and lan
 
 Source-linked calculations and unresolved assumptions are generated in existing Chapter 6.5.3 and `data/staircase-worksheet-loads.json`. Independent source PDF SHA-256 are preserved in the result. Government code directory for independent professional validation: https://dudbc.gov.np/pages/building-code/ . This is **arithmetic audit only**, not permission, construction approval, or a justified real-building structural analysis.
 
+## R6.41 — conditional inverse statics of the original AB/BC diagram
+
+Visually read the revised Narayani report physical pp. 64–65. The diagram labels 11 / 16.24 / 11 are conditionally treated as line loads in kN/m and the displayed positive moment station as the center of a symmetric simply-supported line. Infer L=2*x and calibrate the center patch c=(2*abs(V)-q0*L)/(q1-q0); the displayed peak M is withheld from that calibration. AB: inferred L=3.5052m and c=1.030725m, calculated M=20.930865kNm vs displayed 20.8813kNm (+0.23737%). BC: inferred L=2.9972m and c=0.761985m, calculated M=14.963409kNm vs displayed 14.9635kNm (-0.00061%). These are conditional line-model diagnostics, NOT independently verified staircase spans, load widths, support reactions, deflection, 3D connectivity or design approval. Source shear is a calibration datum, not an independent reaction benchmark. Original R6.40 load combinations, STR-16 geometry, F3 safety and slab benchmark holds remain. The candidate Chapter 6.5.4 and data/staircase-diagram-reconstruction.json preserve the source labels, original PDF reference, assumptions, computed reactions and sampled signed shear/moment diagram coordinates.
+
+## Related source ownership
+
+[Drawing Coordination](https://github.com/FabinGurung/jp-drawing-coordination) owns CAD and drawing revision control. [Research Lab](https://github.com/FabinGurung/jp-research-lab) owns academic research and thesis sources. Structural Analysis owns the applied engineering solver, member calculations and generated structural report. Cross-reference the originals through the restricted Drive source directory; do not relocate or duplicate them or treat academic/CAD content as automatically approved structural inputs.
+
 ## Reproduce
-Python 3.12; \`pip install -r requirements.txt\`; \`pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py r6p30/test_staircase_loads.py tests/test_product.py\`; \`python site_builder.py\`.
+Python 3.12; \`pip install -r requirements.txt\`; \`pytest -q r6p30/test_beam_design.py r6p30/test_column_pmm.py r6p30/test_footing_f3.py r6p30/test_slab_design.py r6p30/test_staircase_review.py r6p30/test_staircase_geometry.py r6p30/test_staircase_loads.py r6p30/test_staircase_diagrams.py tests/test_product.py\`; \`python site_builder.py\`.
 
 ## Governance
 This is a *hypothetical* structural analysis and limited member calculation prototype, not Narayani construction approval. Column local signed N is interpreted by element-end convention for bottom I → top J in the synthetic model; tensile actions are not screened as compression. The actual member orientation and load signs must be verified for any real building. Beam flexure/shear is not an issued bar schedule. Original F3 one-way shear **NOT SAFE** is not cleared.
