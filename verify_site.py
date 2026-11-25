@@ -1,8 +1,9 @@
 from pathlib import Path
 from html.parser import HTMLParser
 import re
+import xml.etree.ElementTree as ET
 site=Path("site")
-assert {p.name for p in site.iterdir()}=={"index.html","projects.html","report.html","staircase.html","studio.html","more.html","style.css","truss.svg","frame.svg","visuals.css","visuals.js","frame-viewer.js","stair-shear.svg","stair-moment.svg"}
+assert {p.name for p in site.iterdir()}=={"index.html","projects.html","report.html","staircase.html","studio.html","more.html","style.css","truss.svg","frame.svg","visuals.css","visuals.js","frame-viewer.js","stair-shear.svg","stair-moment.svg","annex-evidence.svg","ch1-loadpath.svg","ch2-loads.svg","ch2-material.svg","ch3-procedure.svg","ch4-transfer.svg","ch5-beam-diagrams.svg","ch5-forces.svg","ch5-response.svg","ch6-beam.svg","ch6-column.svg","ch6-footing.svg","ch6-members.svg","ch6-slab.svg","ch6-stairs.svg"}
 class Visible(HTMLParser):
     def __init__(self):
         super().__init__(); self.words=[]; self.links=[]; self.ids=[]
@@ -44,4 +45,12 @@ assert 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js' in (si
 assert '@keyframes truss-tour' in (site/"visuals.css").read_text()
 assert 'prefers-reduced-motion' in (site/"visuals.css").read_text()
 assert 'id="calculation-workbooks"' in (site/"projects.html").read_text()
-print("Report presentation checks passed.")
+figures=["annex-evidence.svg","ch1-loadpath.svg","ch2-loads.svg","ch2-material.svg","ch3-procedure.svg","ch4-transfer.svg","ch5-beam-diagrams.svg","ch5-forces.svg","ch5-response.svg","ch6-beam.svg","ch6-column.svg","ch6-footing.svg","ch6-members.svg","ch6-slab.svg","ch6-stairs.svg"]
+for name in figures:
+    ET.parse(site/name)
+    assert report.count('src="'+name+'"')==1,name
+    assert not re.search(r"\b(?:ChatGPT|OpenAI|Codex|archived|audit log)\b",(site/name).read_text(),re.I),name
+assert report.count('class="engineering-figure"')==15
+for chapter in ["chapter-1-0","chapter-2-0","chapter-3-0","chapter-4-0","chapter-5-0","chapter-6-0","chapter-6-1","chapter-6-2","chapter-6-3","chapter-6-4","chapter-6-5","annex"]:
+    assert re.search(r'id="'+chapter+r'".*?class="engineering-figure"',report,re.S),chapter
+print("Report presentation and 15 engineering figure checks passed.")
