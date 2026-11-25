@@ -1,3 +1,3 @@
 # JP Structural Analysis
 
-Static presentation of structural reports and calculation results. Working source: [Drive](https://drive.google.com/drive/folders/1KhjI1OF33VGS5F3kDBe5eg0_XWbA9bHe). Publication reads the current report text, module workbooks and visualization source, then validates and deploys the generated site. No engineering solver executes in this repository.
+Static structural study presentation. Source calculations and engineering records are maintained in the [working Drive](https://drive.google.com/drive/folders/1KhjI1OF33VGS5F3kDBe5eg0_XWbA9bHe). This repository contains the generated website, result data, and publication validation only.
