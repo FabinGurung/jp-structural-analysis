@@ -2,7 +2,7 @@ from pathlib import Path
 from html.parser import HTMLParser
 import json, math, re, xml.etree.ElementTree as ET
 site=Path("site")
-expected=["design.html","force-My.svg","force-Mz.svg","force-N.svg","force-Rz.svg","force-T.svg","force-Vy.svg","force-Vz.svg","force-def.svg","index.html","model-FF.json","model-GF.json","model-TF.json","model-geometry.json","model-isometric.svg","model-plan.svg","model.css","model.js","more.html","projects.html","refinement.html","report.html","staircase.html","studio.html","style.css","truss.svg","visuals.css","visuals.js"]
+expected=["design.html","force-My.svg","force-Mz.svg","force-N.svg","force-Rz.svg","force-T.svg","force-Vy.svg","force-Vz.svg","force-def.svg","foundation-screen.svg","geometry.html","index.html","model-FF.json","model-GF.json","model-TF.json","model-geometry.json","model-isometric.svg","model-plan.svg","model.css","model.js","more.html","projects.html","refinement.html","report.html","staircase.html","studio.html","style.css","truss.svg","visuals.css","visuals.js"]
 assert sorted(p.name for p in site.iterdir())==expected
 class Document(HTMLParser):
     def __init__(self):
@@ -55,3 +55,9 @@ refined=(site/"refinement.html").read_text()
 for label in ["999.84623","779.99505","753.65217","Direct beam overlap","Indirect shell adjacency only","not for construction or procurement","Six further section changes","IF3 original one-way shear failure"]:
     assert label in refined,label
 assert 'href="refinement.html"' in design
+
+geometry=(site/"geometry.html").read_text()
+for label in ["23 support points mapped to 21 foundation footprints","12 out-of-storey surfaces","not for construction or procurement","104 of 105","Eleven unresolved column screens","Original IF3 one-way shear failure","foundation-screen.svg","Foundation screen (44)"]:
+    assert label in geometry,label
+for name in ["report.html","design.html","refinement.html"]:
+    assert 'href="geometry.html"' in (site/name).read_text()
