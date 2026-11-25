@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="684pt" height="216pt" viewBox="0 0 684 216" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>JP Structural</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 216 
+L 684 216 
+L 684 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 65.14872 160.90816 
+L 182.02254 160.90816 
+Q 194.39014 160.90816 194.39014 158.95456 
+L 194.39014 114.60784 
+Q 194.39014 112.65424 182.02254 112.65424 
+L 65.14872 112.65424 
+Q 52.78112 112.65424 52.78112 114.60784 
+L 52.78112 158.95456 
+Q 52.78112 160.90816 65.14872 160.90816 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #f4f8fa; stroke: #b56c20; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 188.966935 137.2696 
+Q 198.09726 137.2696 206.109551 137.2696 
+" clip-path="url(#p2cfdce0094)" style="fill: none; stroke: #b56c20; stroke-linecap: round"/>
+    <path d="M 201.309551 134.8696 
+L 206.109551 137.2696 
+L 201.309551 139.6696 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #b56c20; stroke: #b56c20; stroke-linecap: round"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 214.1783 160.90816 
+L 331.05212 160.90816 
+Q 343.41972 160.90816 343.41972 158.95456 
+L 343.41972 114.60784 
+Q 343.41972 112.65424 331.05212 112.65424 
+L 214.1783 112.65424 
+Q 201.8107 112.65424 201.8107 114.60784 
+L 201.8107 158.95456 
+Q 201.8107 160.90816 214.1783 160.90816 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #f4f8fa; stroke: #b56c20; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 337.996515 137.2696 
+Q 347.12684 137.2696 355.139131 137.2696 
+" clip-path="url(#p2cfdce0094)" style="fill: none; stroke: #b56c20; stroke-linecap: round"/>
+    <path d="M 350.339131 134.8696 
+L 355.139131 137.2696 
+L 350.339131 139.6696 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #b56c20; stroke: #b56c20; stroke-linecap: round"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 363.20788 160.90816 
+L 480.0817 160.90816 
+Q 492.4493 160.90816 492.4493 158.95456 
+L 492.4493 114.60784 
+Q 492.4493 112.65424 480.0817 112.65424 
+L 363.20788 112.65424 
+Q 350.84028 112.65424 350.84028 114.60784 
+L 350.84028 158.95456 
+Q 350.84028 160.90816 363.20788 160.90816 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #f4f8fa; stroke: #b56c20; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 487.026095 137.2696 
+Q 496.15642 137.2696 504.168711 137.2696 
+" clip-path="url(#p2cfdce0094)" style="fill: none; stroke: #b56c20; stroke-linecap: round"/>
+    <path d="M 499.368711 134.8696 
+L 504.168711 137.2696 
+L 499.368711 139.6696 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #b56c20; stroke: #b56c20; stroke-linecap: round"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 512.23746 160.90816 
+L 629.11128 160.90816 
+Q 641.47888 160.90816 641.47888 158.95456 
+L 641.47888 114.60784 
+Q 641.47888 112.65424 629.11128 112.65424 
+L 512.23746 112.65424 
+Q 499.86986 112.65424 499.86986 114.60784 
+L 499.86986 158.95456 
+Q 499.86986 160.90816 512.23746 160.90816 
+z
+" clip-path="url(#p2cfdce0094)" style="fill: #f4f8fa; stroke: #b56c20; stroke-width: 1.6; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #b56c20" x="123.58563" y="134.168175" transform="rotate(-0 123.58563 134.168175)">Area pressure</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #223746" x="123.58563" y="150.359869" transform="rotate(-0 123.58563 150.359869)">kN/m²</text>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #b56c20" x="272.61521" y="134.129113" transform="rotate(-0 272.61521 134.129113)">Tributary width</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #223746" x="272.61521" y="150.359869" transform="rotate(-0 272.61521 150.359869)">m</text>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #b56c20" x="421.64479" y="134.168175" transform="rotate(-0 421.64479 134.168175)">Member load</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #223746" x="421.64479" y="150.359869" transform="rotate(-0 421.64479 150.359869)">kN/m</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #b56c20" x="570.67437" y="134.168175" transform="rotate(-0 570.67437 134.168175)">Reaction</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 8.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #223746" x="570.67437" y="150.359869" transform="rotate(-0 570.67437 150.359869)">kN</text>
+   </g>
+  </g>
+  <g id="text_9">
+   <text style="font-weight: 700; font-size: 15px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #223746" x="30.78" y="18.597656" transform="rotate(-0 30.78 18.597656)">Model load application</text>
+  </g>
+  <g id="text_10">
+   <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #506674" x="30.78" y="36.358594" transform="rotate(-0 30.78 36.358594)">Illustrative route from assigned loads to reactions; no actual project connectivity inferred.</text>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p2cfdce0094">
+   <rect x="37.94" y="91.36" width="618.38" height="97.68"/>
+  </clipPath>
+ </defs>
+</svg>
