@@ -52,7 +52,7 @@ for label in ["Case envelopes (38)","Beam candidates (105)","Column candidates (
 assert 'href="design.html"' in report
 
 refined=(site/"refinement.html").read_text()
-for label in ["999.84623","779.99505","753.65217","Direct beam overlap","Indirect shell adjacency only","not for construction or procurement","Six further section changes","IF3 original one-way shear failure"]:
+for label in ["999.84623","779.99505","753.65217","Direct beam overlap","Indirect shell adjacency only","not for construction or procurement","Six alternative beam sections","IF3 original one-way shear failure"]:
     assert label in refined,label
 assert 'href="refinement.html"' in design
 
@@ -61,3 +61,14 @@ for label in ["23 support points mapped to 21 foundation footprints","12 out-of-
     assert label in geometry,label
 for name in ["report.html","design.html","refinement.html"]:
     assert 'href="geometry.html"' in (site/name).read_text()
+
+# Author edition: reader-facing chapters and public-safe links.
+for name in ["index.html","projects.html","report.html","design.html","refinement.html","geometry.html"]:
+    page=(site/name).read_text()
+    assert 'aria-label="Primary navigation"' in page and 'not for construction or procurement' in page
+    assert not re.search(r'\b(?:HOLD|demo|audit log|checkpoint)\b',page,re.I),name
+    assert 'docs.google.com' not in page and 'drive.google.com' not in page,name
+    assert page.count('aria-current="page"')==1,name
+assert 'Free residual' not in geometry and 'Force moment residual' not in geometry
+assert 'Global equilibrium residual' not in report
+assert '984.19' in (site/"index.html").read_text() and '0.74041' in (site/"index.html").read_text()
